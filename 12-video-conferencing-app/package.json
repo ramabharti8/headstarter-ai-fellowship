@@ -1,0 +1,19 @@
+{
+  "name": "video-conferencing-app",
+  "version": "1.0.0",
+  "description": "Peer-to-peer video conferencing with screen sharing via WebRTC",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

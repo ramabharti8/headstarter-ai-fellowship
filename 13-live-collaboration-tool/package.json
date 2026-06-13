@@ -1,0 +1,21 @@
+{
+  "name": "live-collaboration-tool",
+  "version": "1.0.0",
+  "description": "Real-time shared whiteboard and document editing via WebSockets",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0",
+    "yjs": "^13.6.10",
+    "y-websocket": "^1.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
