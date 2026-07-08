@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      LOG_LEVEL: INFO
+      # API_KEY: change-me      # uncomment to require X-API-Key
+      # RATE_LIMIT: 30/minute

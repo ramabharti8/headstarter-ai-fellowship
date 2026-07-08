@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Generated data / large datasets / reports
+data/transactions.csv
+data/creditcard.csv
+*.xlsx
+!**/reference/*.xlsx
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

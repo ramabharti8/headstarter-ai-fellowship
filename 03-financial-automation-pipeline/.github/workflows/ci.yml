@@ -1,0 +1,27 @@
+name: Finance CI
+
+# GitHub runs workflows only from the REPOSITORY ROOT `.github/workflows/`.
+# In a monorepo, copy this to the repo root to activate; the path filter +
+# working-directory below scope it to this project.
+on:
+  push:
+    paths: ["03-financial-automation-pipeline/**"]
+  pull_request:
+    paths: ["03-financial-automation-pipeline/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 03-financial-automation-pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run tests
+        run: pytest -q

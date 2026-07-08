@@ -26,7 +26,7 @@
 |---|---------|------|--------------|
 | 01 | **[MRI Brain Tumor Classifier](01-mri-brain-tumor-classifier)** | TensorFlow · Keras · VGG-16 · FastAPI | VGG-16 transfer-learning CNN classifies brain MRI scans into glioma / meningioma / pituitary / no-tumor, served via a REST API |
 | 02 | **[Customer Churn Predictor](02-customer-churn-predictor)** | XGBoost · FastAPI · MLflow · Streamlit | Calibrated XGBoost on the real IBM Telco dataset (ROC-AUC 0.84); FastAPI API with API-key auth, PSI/KS drift detection & MLflow tracking |
-| 03 | **Financial Automation Pipeline** | Python · Pandas · FastAPI | Automates financial report generation and anomaly detection |
+| 03 | **[Financial Automation Pipeline](03-financial-automation-pipeline)** | Pandas · scikit-learn · FastAPI | Automated financial reports + anomaly detection; a multivariate Isolation Forest catches 82% of real fraud (ROC-AUC 0.95) on the ULB Credit Card Fraud dataset |
 
 ### AI-Powered Applications
 
