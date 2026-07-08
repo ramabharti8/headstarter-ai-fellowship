@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+
+# Trained model weights (large binaries — train locally)
+saved_models/*.h5
+saved_models/*.keras
+saved_models/*.pkl
+!saved_models/.gitkeep
+
+# MRI dataset (large — download from Kaggle)
+data/
+
+# Plots (generated during training)
+plots/
+
+# Logs
+*.log
+logs/
+
+# Notebook checkpoints
+.ipynb_checkpoints/

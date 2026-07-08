@@ -1,30 +1,67 @@
-import os
-from fastapi import FastAPI, UploadFile, File
+"""
+MRI Brain Tumor Classifier — FastAPI application entry point.
+
+Run:
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Docs:
+    http://localhost:8000/docs   (Swagger UI)
+    http://localhost:8000/redoc  (ReDoc)
+"""
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.model import build_model, predict
+from loguru import logger
 
-app = FastAPI(title="MRI Brain Tumor Classifier")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-
-model = None
+from app.routers import mri
 
 
-@app.on_event("startup")
-async def startup():
-    global model
-    model = build_model()
-    weights_path = os.environ.get("MODEL_WEIGHTS", "")
-    if weights_path and os.path.exists(weights_path):
-        model.load_weights(weights_path)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting up — pre-loading MRI model...")
+    try:
+        from app.models.mri_model import get_model
+        get_model()
+    except FileNotFoundError as e:
+        logger.warning(f"MRI model not pre-loaded: {e}")
+
+    yield
+    logger.info("Shutting down.")
 
 
-@app.post("/classify")
-async def classify(file: UploadFile = File(...)):
-    image_bytes = await file.read()
-    result = predict(model, image_bytes)
-    return result
+app = FastAPI(
+    title="MRI Brain Tumor Classifier",
+    description=(
+        "CNN-based brain MRI tumor classification (VGG-16 transfer learning), "
+        "served as a production-ready REST endpoint. Classifies scans into "
+        "glioma, meningioma, pituitary, or no_tumor."
+    ),
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(mri.router)
 
 
-@app.get("/health")
+@app.get("/", tags=["Health"])
+def root():
+    return {
+        "status": "ok",
+        "endpoints": {
+            "mri_classifier": "POST /predict/mri",
+            "docs": "/docs",
+        },
+    }
+
+
+@app.get("/health", tags=["Health"])
 def health():
-    return {"status": "ok", "model_loaded": model is not None}
+    return {"status": "healthy"}
