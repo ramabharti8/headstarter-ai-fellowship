@@ -24,8 +24,8 @@
 
 | # | Project | Tech | What It Does |
 |---|---------|------|--------------|
-| 01 | **MRI Brain Tumor Classifier** | TensorFlow · Keras · FastAPI | CNN classifies brain MRI scans into tumor types with REST inference API |
-| 02 | **Customer Churn Predictor** | Scikit-learn · XGBoost · FastAPI | Gradient-boosted model predicts customer churn with 91%+ accuracy |
+| 01 | **[MRI Brain Tumor Classifier](01-mri-brain-tumor-classifier)** | TensorFlow · Keras · VGG-16 · FastAPI | VGG-16 transfer-learning CNN classifies brain MRI scans into glioma / meningioma / pituitary / no-tumor, served via a REST API |
+| 02 | **[Customer Churn Predictor](02-customer-churn-predictor)** | XGBoost · FastAPI · MLflow · Streamlit | Calibrated XGBoost on the real IBM Telco dataset (ROC-AUC 0.84); FastAPI API with API-key auth, PSI/KS drift detection & MLflow tracking |
 | 03 | **Financial Automation Pipeline** | Python · Pandas · FastAPI | Automates financial report generation and anomaly detection |
 
 ### AI-Powered Applications
