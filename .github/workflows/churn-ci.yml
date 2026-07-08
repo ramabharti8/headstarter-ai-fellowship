@@ -1,0 +1,35 @@
+name: Churn CI
+
+# IMPORTANT: GitHub only runs workflows from the REPOSITORY ROOT `.github/workflows/`.
+# In this monorepo the file is kept inside the project for reference; to activate it,
+# copy it to `<repo-root>/.github/workflows/`. The path filter + working-directory below
+# already scope it to this project so it won't interfere with the other projects.
+
+on:
+  push:
+    paths: ["02-customer-churn-predictor/**"]
+  pull_request:
+    paths: ["02-customer-churn-predictor/**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 02-customer-churn-predictor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run test suite
+        run: pytest -q
+
+      - name: Smoke-train (synthetic data)
+        run: python train.py

@@ -1,0 +1,16 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_PATH: models/churn_model.joblib
+      METRICS_PATH: models/metrics.json
+
+  ui:
+    build: .
+    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api

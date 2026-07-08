@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Model + data artifacts (regenerate with `python train.py`)
+models/
+data/telco_churn.csv
+data/_raw_telco.csv
+
+# MLflow tracking (regenerate with `python train.py --track`)
+mlruns/
+mlflow.db
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

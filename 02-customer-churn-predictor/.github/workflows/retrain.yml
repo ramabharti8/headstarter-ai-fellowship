@@ -1,0 +1,49 @@
+name: Churn Scheduled Retraining
+
+# Automated retraining with a champion/challenger safety gate: retrain weekly on
+# fresh data, but only promote the new model if it doesn't regress on ROC-AUC.
+#
+# IMPORTANT: GitHub runs workflows only from the REPOSITORY ROOT `.github/workflows/`.
+# In this monorepo it's kept in the project for reference; copy it to the repo root
+# to activate. working-directory below scopes it to this project.
+on:
+  schedule:
+    - cron: "0 3 * * 1"        # Mondays 03:00 UTC
+  workflow_dispatch: {}         # allow manual runs from the Actions tab
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 02-customer-churn-predictor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Download latest Telco dataset
+        run: |
+          curl -sL https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv \
+            -o data/_raw_telco.csv
+
+      - name: Retrain with champion/challenger gate
+        run: python scripts/promote.py --telco-raw data/_raw_telco.csv
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Upload model + metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: churn-model
+          path: |
+            02-customer-churn-predictor/models/churn_model.joblib
+            02-customer-churn-predictor/models/metrics.json
+          retention-days: 30
