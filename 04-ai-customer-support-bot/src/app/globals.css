@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Warm, editorial palette inspired by Claude's design language. */
+:root {
+  --background: 44 24% 96%; /* warm ivory */
+  --surface: 40 20% 99%;
+  --foreground: 40 8% 16%; /* warm near-black */
+  --muted: 42 18% 90%;
+  --muted-foreground: 40 6% 42%;
+  --card: 40 24% 99%;
+  --border: 42 16% 87%;
+  --input: 42 16% 85%;
+  --primary: 14 55% 52%; /* terracotta */
+  --primary-foreground: 40 30% 98%;
+  --accent: 42 20% 92%;
+  --accent-foreground: 40 8% 16%;
+  --destructive: 0 60% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 14 55% 52%;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: 40 6% 14%;
+  --surface: 40 5% 12%;
+  --foreground: 42 18% 88%;
+  --muted: 40 5% 20%;
+  --muted-foreground: 42 8% 60%;
+  --card: 40 5% 16%;
+  --border: 40 5% 24%;
+  --input: 40 5% 26%;
+  --primary: 14 60% 58%;
+  --primary-foreground: 40 10% 12%;
+  --accent: 40 5% 20%;
+  --accent-foreground: 42 18% 88%;
+  --destructive: 0 55% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 14 60% 58%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-serif {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+}
+
+/* Markdown rendering inside chat messages */
+.prose-chat {
+  line-height: 1.65;
+}
+.prose-chat > :first-child {
+  margin-top: 0;
+}
+.prose-chat > :last-child {
+  margin-bottom: 0;
+}
+.prose-chat p {
+  margin: 0 0 0.85rem;
+}
+.prose-chat h1,
+.prose-chat h2,
+.prose-chat h3 {
+  font-weight: 600;
+  margin: 1.4rem 0 0.6rem;
+  line-height: 1.3;
+}
+.prose-chat h1 {
+  font-size: 1.3rem;
+}
+.prose-chat h2 {
+  font-size: 1.15rem;
+}
+.prose-chat h3 {
+  font-size: 1.02rem;
+}
+.prose-chat ul,
+.prose-chat ol {
+  margin: 0.5rem 0 0.85rem 1.35rem;
+  list-style: revert;
+}
+.prose-chat li {
+  margin: 0.25rem 0;
+}
+.prose-chat code {
+  background: hsl(var(--muted));
+  padding: 0.12rem 0.34rem;
+  border-radius: 0.3rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.86em;
+}
+.prose-chat pre {
+  background: hsl(var(--foreground) / 0.04);
+  border: 1px solid hsl(var(--border));
+  padding: 0.9rem 1rem;
+  border-radius: 0.6rem;
+  overflow-x: auto;
+  margin: 0.85rem 0;
+}
+.dark .prose-chat pre {
+  background: hsl(0 0% 0% / 0.25);
+}
+.prose-chat pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.prose-chat blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 0.9rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.85rem 0;
+}
+.prose-chat a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-chat table {
+  border-collapse: collapse;
+  margin: 0.85rem 0;
+  font-size: 0.9em;
+  display: block;
+  overflow-x: auto;
+}
+.prose-chat th,
+.prose-chat td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+}
+.prose-chat th {
+  background: hsl(var(--muted));
+  font-weight: 600;
+}
+
+/* thin custom scrollbars */
+.scroll-slim::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.15);
+  border-radius: 999px;
+}

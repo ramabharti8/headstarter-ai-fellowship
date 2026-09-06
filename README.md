@@ -32,7 +32,7 @@
 
 | # | Project | Tech | What It Does |
 |---|---------|------|--------------|
-| 04 | **AI Customer Support Bot** | OpenAI · LangChain · Node.js | Context-aware support chatbot with conversation memory |
+| 04 | **[AI Customer Support Bot](04-ai-customer-support-bot)** | Next.js 15 · Prisma · pgvector · Auth.js · Gemini | Multi-tenant AI assistant platform: streaming chat with memory, a RAG knowledge base over pgvector with citations, an embeddable widget, and a bearer-authed REST API — Dockerised with unit + e2e tests and CI |
 | 05 | **Document Q&A API** | LangChain · ChromaDB · FastAPI | Upload any document, ask questions in natural language |
 | 06 | **AI Code Reviewer** | OpenAI GPT-4 · FastAPI | Reviews code snippets and suggests improvements |
 | 07 | **Sentiment Analysis API** | Hugging Face · FastAPI | Real-time sentiment scoring for text and social media |
