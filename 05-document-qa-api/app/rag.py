@@ -223,3 +223,64 @@ class RagEngine:
 
         prompt = _ANSWER_PROMPT.format(context=context, question=question)
         return self._chat().invoke(prompt).content, docs
+
+    def _all_chunks(self, doc_id: str) -> list[Document]:
+        store = self._load(doc_id)
+        if store is None:
+            return []
+        docs = [store.docstore.search(i) for i in store.index_to_docstore_id.values()]
+        docs = [d for d in docs if isinstance(d, Document)]
+        docs.sort(
+            key=lambda d: (
+                d.metadata.get("page", 0),
+                d.metadata.get("start_index", 0),
+            )
+        )
+        return docs
+
+    def summarize(self, doc_id: str, focus: str | None = None) -> tuple[str, int]:
+        """Map-reduce over the WHOLE document, not just retrieved chunks."""
+        docs = self._all_chunks(doc_id)
+        if not docs:
+            return "This document has no indexed content.", 0
+
+        if self.settings.is_fake:
+            head = " ".join(docs[0].page_content.split())[:300]
+            return f"[fake-ai] Summary of {len(docs)} chunks. Opens: {head}", len(docs)
+
+        llm = self._chat()
+        hint = f" Pay special attention to: {focus}." if focus else ""
+
+        # Group chunks into batches that comfortably fit one prompt.
+        batches: list[list[Document]] = []
+        cur: list[Document] = []
+        cur_len = 0
+        for d in docs:
+            if cur and cur_len + len(d.page_content) > 8000:
+                batches.append(cur)
+                cur, cur_len = [], 0
+            cur.append(d)
+            cur_len += len(d.page_content)
+        if cur:
+            batches.append(cur)
+
+        partials: list[str] = []
+        for batch in batches:
+            text = "\n\n".join(d.page_content for d in batch)
+            partials.append(
+                llm.invoke(
+                    "Summarise this section of a document in detail, keeping every "
+                    f"key point, definition and example.{hint}\n\n{text}\n\nSummary:"
+                ).content
+            )
+
+        if len(partials) == 1:
+            return partials[0], len(docs)
+
+        joined = "\n\n".join(f"[Part {i + 1}]\n{p}" for i, p in enumerate(partials))
+        final = llm.invoke(
+            "Combine these part-summaries into one comprehensive, well-structured "
+            f"summary of the entire document. Use headings and bullet points.{hint}"
+            f"\n\n{joined}\n\nComprehensive summary:"
+        ).content
+        return final, len(docs)

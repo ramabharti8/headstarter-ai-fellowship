@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
     retrieval_k: int = 6  # chunks fed to the model; raise for broad questions
-    max_answer_tokens: int = 1024  # cap on the generated answer length
+    max_answer_tokens: int = 2000  # ceiling on generated answer / summary length
     snippet_chars: int = 500  # length of each source excerpt in the response
     max_upload_mb: int = 25
 

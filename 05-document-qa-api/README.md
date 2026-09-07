@@ -16,6 +16,9 @@ pages they came from. Retrieval-augmented generation (RAG) over
 - **`POST /ask`** — retrieves the most relevant chunks for a question and asks
   the LLM to answer *using only that context*. Returns the answer plus source
   snippets with page numbers.
+- **`POST /summarize`** — map-reduce over **every** chunk of the document (not
+  just retrieved ones) for a full summary. Optional `focus` string. Slower and
+  uses more tokens; this is what to use for "summarise the whole book".
 - **`GET /documents`**, **`GET /documents/{id}`**, **`DELETE /documents/{id}`** —
   manage uploaded documents. Metadata is kept in SQLite so it survives restarts.
 - **`GET /health`** — liveness + whether an AI provider is configured.
@@ -112,10 +115,10 @@ All settings are environment variables prefixed `QA_` (see
 `QA_CHUNK_OVERLAP`, `QA_RETRIEVAL_K`, `QA_MAX_ANSWER_TOKENS`, `QA_SNIPPET_CHARS`,
 `QA_MAX_UPLOAD_MB`, `QA_CORS_ORIGINS`.
 
-**Getting fuller answers.** RAG only shows the model the chunks it retrieves, so
-a broad question ("summarise the whole book") is limited by `QA_RETRIEVAL_K`
-(default 6). Raise it to 10–12 for wide questions, or ask narrower ones. The
-answer length itself is capped by `QA_MAX_ANSWER_TOKENS`.
+**Getting fuller answers.** `/ask` only shows the model the chunks it retrieves,
+so a broad question is limited by `QA_RETRIEVAL_K` (default 6 — raise to 10–12
+for wide questions). For a genuine whole-document summary use **`/summarize`**,
+which reads every chunk. Generated length is capped by `QA_MAX_ANSWER_TOKENS`.
 
 ## Development
 

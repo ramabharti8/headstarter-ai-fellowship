@@ -21,6 +21,8 @@ from .schemas import (
     HealthResponse,
     QuestionRequest,
     Source,
+    SummarizeRequest,
+    SummaryResponse,
     UploadResponse,
 )
 from .store import DocumentStore
@@ -200,6 +202,32 @@ def ask_question(
         for d in docs
     ]
     return AnswerResponse(answer=answer, sources=sources)
+
+
+@app.post(
+    "/summarize",
+    response_model=SummaryResponse,
+    tags=["qa"],
+    responses={
+        404: {"description": "Document not found"},
+        502: {"description": "Upstream model error"},
+    },
+)
+def summarize_document(
+    req: SummarizeRequest,
+    store: DocumentStore = Depends(get_store),
+    rag: RagEngine = Depends(get_rag),
+) -> SummaryResponse:
+    """Summarise the ENTIRE document (map-reduce over all chunks), not just the
+    few chunks a single question would retrieve. Slower and uses more tokens."""
+    if not store.get(req.doc_id):
+        raise HTTPException(404, "Document not found.")
+    try:
+        summary, used = rag.summarize(req.doc_id, req.focus)
+    except Exception as exc:  # noqa: BLE001
+        log.exception("summarize failed")
+        raise HTTPException(502, f"Model provider error: {exc}") from exc
+    return SummaryResponse(summary=summary, chunks_used=used)
 
 
 def _excerpt(text: str, limit: int) -> str:

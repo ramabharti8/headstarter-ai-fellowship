@@ -56,6 +56,19 @@ def test_ask_unknown_document(client):
     assert r.status_code == 404
 
 
+def test_summarize_whole_document(client, sample_pdf):
+    doc_id = _upload(client, sample_pdf).json()["doc_id"]
+    r = client.post("/summarize", json={"doc_id": doc_id})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["chunks_used"] >= 1
+    assert len(body["summary"]) > 0
+
+
+def test_summarize_unknown_document(client):
+    assert client.post("/summarize", json={"doc_id": "nope"}).status_code == 404
+
+
 def test_ask_validates_question_length(client, sample_pdf):
     doc_id = _upload(client, sample_pdf).json()["doc_id"]
     r = client.post("/ask", json={"doc_id": doc_id, "question": "hi"})

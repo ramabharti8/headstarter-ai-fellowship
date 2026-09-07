@@ -40,6 +40,7 @@
     <input type="text" id="docId" placeholder="doc_id (filled in after upload)" />
     <textarea id="q" placeholder="What are the key findings?"></textarea>
     <button id="askBtn">Ask</button>
+    <button id="sumBtn" title="Reads the whole document (slower)">Summarize whole document</button>
     <div class="out" id="askOut" hidden></div>
   </div>
 </main>
@@ -85,6 +86,23 @@ $("askBtn").onclick = async () => {
       const d = document.createElement("div"); d.className = "src";
       d.textContent = `p.${s.page ?? "?"} — ${s.snippet}`; out.appendChild(d);
     });
+  } catch (e) { out.textContent = "Error: " + e.message; }
+  finally { btn.disabled = false; }
+};
+
+$("sumBtn").onclick = async () => {
+  const doc_id = $("docId").value.trim();
+  if (!doc_id) return alert("Need a doc_id (upload first).");
+  const focus = $("q").value.trim() || null;
+  const btn = $("sumBtn"); btn.disabled = true;
+  const out = $("askOut"); out.hidden = false;
+  out.textContent = "Reading the whole document… this can take a while.";
+  try {
+    const r = await api("/summarize", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc_id, focus }),
+    });
+    out.textContent = r.summary + `\n\n(${r.chunks_used} chunks read)`;
   } catch (e) { out.textContent = "Error: " + e.message; }
   finally { btn.disabled = false; }
 };

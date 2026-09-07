@@ -40,6 +40,16 @@ class QuestionRequest(BaseModel):
     question: str = Field(..., min_length=3, max_length=2000)
 
 
+class SummarizeRequest(BaseModel):
+    doc_id: str
+    focus: str | None = Field(default=None, max_length=500)
+
+
+class SummaryResponse(BaseModel):
+    summary: str
+    chunks_used: int
+
+
 class Source(BaseModel):
     page: int | None
     snippet: str
