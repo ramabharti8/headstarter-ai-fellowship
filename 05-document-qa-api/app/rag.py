@@ -239,24 +239,43 @@ class RagEngine:
         return docs
 
     def summarize(self, doc_id: str, focus: str | None = None) -> tuple[str, int]:
-        """Map-reduce over the WHOLE document, not just retrieved chunks."""
+        """Summarise the document as a whole.
+
+        To stay within free-tier rate limits this bounds the work: at most
+        ``summary_max_chunks`` chunks (evenly sampled across the document, or the
+        best matches when a ``focus`` is given), packed into large batches so the
+        model is called only a handful of times.
+        """
         docs = self._all_chunks(doc_id)
         if not docs:
             return "This document has no indexed content.", 0
 
+        total = len(docs)
+        cap = self.settings.summary_max_chunks
+        if focus:
+            store = self._load(doc_id)
+            picked = store.similarity_search(focus, k=cap) if store else docs[:cap]
+        elif total > cap:
+            step = total / cap
+            picked = [docs[min(int(i * step), total - 1)] for i in range(cap)]
+        else:
+            picked = docs
+
         if self.settings.is_fake:
-            head = " ".join(docs[0].page_content.split())[:300]
-            return f"[fake-ai] Summary of {len(docs)} chunks. Opens: {head}", len(docs)
+            head = " ".join(picked[0].page_content.split())[:300]
+            return f"[fake-ai] Summary of {len(picked)} chunks. Opens: {head}", len(
+                picked
+            )
 
         llm = self._chat()
         hint = f" Pay special attention to: {focus}." if focus else ""
 
-        # Group chunks into batches that comfortably fit one prompt.
+        # Few, large batches — one model call each.
         batches: list[list[Document]] = []
         cur: list[Document] = []
         cur_len = 0
-        for d in docs:
-            if cur and cur_len + len(d.page_content) > 8000:
+        for d in picked:
+            if cur and cur_len + len(d.page_content) > 24000:
                 batches.append(cur)
                 cur, cur_len = [], 0
             cur.append(d)
@@ -269,13 +288,14 @@ class RagEngine:
             text = "\n\n".join(d.page_content for d in batch)
             partials.append(
                 llm.invoke(
-                    "Summarise this section of a document in detail, keeping every "
-                    f"key point, definition and example.{hint}\n\n{text}\n\nSummary:"
+                    "In about 200 words, summarise this part of a document, "
+                    f"keeping the key points, definitions and examples.{hint}"
+                    f"\n\n{text}\n\nSummary:"
                 ).content
             )
 
         if len(partials) == 1:
-            return partials[0], len(docs)
+            return partials[0], len(picked)
 
         joined = "\n\n".join(f"[Part {i + 1}]\n{p}" for i, p in enumerate(partials))
         final = llm.invoke(
@@ -283,4 +303,4 @@ class RagEngine:
             f"summary of the entire document. Use headings and bullet points.{hint}"
             f"\n\n{joined}\n\nComprehensive summary:"
         ).content
-        return final, len(docs)
+        return final, len(picked)

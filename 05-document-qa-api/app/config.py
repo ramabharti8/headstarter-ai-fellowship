@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     retrieval_k: int = 6  # chunks fed to the model; raise for broad questions
     max_answer_tokens: int = 2000  # ceiling on generated answer / summary length
     snippet_chars: int = 500  # length of each source excerpt in the response
+    summary_max_chunks: int = 40  # /summarize caps work here to fit free-tier limits
     max_upload_mb: int = 25
 
     # --- API ---

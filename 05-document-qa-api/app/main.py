@@ -218,8 +218,9 @@ def summarize_document(
     store: DocumentStore = Depends(get_store),
     rag: RagEngine = Depends(get_rag),
 ) -> SummaryResponse:
-    """Summarise the ENTIRE document (map-reduce over all chunks), not just the
-    few chunks a single question would retrieve. Slower and uses more tokens."""
+    """Summarise the document as a whole. Reads a broad sample of chunks across
+    the whole PDF (capped by QA_SUMMARY_MAX_CHUNKS) rather than just the few a
+    single question retrieves. Slower than /ask and uses more tokens."""
     if not store.get(req.doc_id):
         raise HTTPException(404, "Document not found.")
     try:

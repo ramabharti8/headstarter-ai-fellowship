@@ -16,9 +16,10 @@ pages they came from. Retrieval-augmented generation (RAG) over
 - **`POST /ask`** — retrieves the most relevant chunks for a question and asks
   the LLM to answer *using only that context*. Returns the answer plus source
   snippets with page numbers.
-- **`POST /summarize`** — map-reduce over **every** chunk of the document (not
-  just retrieved ones) for a full summary. Optional `focus` string. Slower and
-  uses more tokens; this is what to use for "summarise the whole book".
+- **`POST /summarize`** — summarise the document as a whole: reads a broad
+  sample of chunks from across the PDF (capped by `QA_SUMMARY_MAX_CHUNKS`,
+  default 40), batch-summarises, then combines. Optional `focus` string. A few
+  model calls — slower than `/ask`. Use for "summarise the whole book".
 - **`GET /documents`**, **`GET /documents/{id}`**, **`DELETE /documents/{id}`** —
   manage uploaded documents. Metadata is kept in SQLite so it survives restarts.
 - **`GET /health`** — liveness + whether an AI provider is configured.
@@ -117,8 +118,9 @@ All settings are environment variables prefixed `QA_` (see
 
 **Getting fuller answers.** `/ask` only shows the model the chunks it retrieves,
 so a broad question is limited by `QA_RETRIEVAL_K` (default 6 — raise to 10–12
-for wide questions). For a genuine whole-document summary use **`/summarize`**,
-which reads every chunk. Generated length is capped by `QA_MAX_ANSWER_TOKENS`.
+for wide questions). For a whole-document summary use **`/summarize`**. On free-tier providers (Groq,
+Gemini) keep `QA_SUMMARY_MAX_CHUNKS` modest — each extra batch is another
+rate-limited call. Generated length is capped by `QA_MAX_ANSWER_TOKENS`.
 
 ## Development
 
