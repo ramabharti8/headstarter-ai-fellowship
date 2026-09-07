@@ -186,6 +186,50 @@ button { font-family: inherit; }
   font-size: 12px;
 }
 .sidebar__foot a:hover, .link-btn:hover { color: var(--accent); }
+.sidebar__foot-right { display: flex; gap: 12px; }
+
+/* ============ modal ============ */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+.modal__card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 24px 24px;
+  text-align: center;
+}
+.modal__icon {
+  width: 42px; height: 42px;
+  margin: 0 auto 14px;
+  color: var(--accent);
+}
+.modal__card h2 { margin: 0 0 6px; font-size: 17px; }
+.modal__card p { margin: 0 0 16px; font-size: 13px; color: var(--text-dim); }
+.modal__card form { display: flex; flex-direction: column; gap: 10px; }
+.modal__card input {
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font: inherit;
+  outline: 0;
+}
+.modal__card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.modal__card .btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+.modal__card .btn:hover { background: var(--accent-hover); color: #fff; }
+.modal__err { color: var(--err) !important; margin-top: 12px !important; }
 
 /* ============ main ============ */
 .main {

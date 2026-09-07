@@ -13,6 +13,7 @@ class HealthResponse(BaseModel):
     provider: str
     ai_enabled: bool
     fake_ai: bool
+    auth_required: bool = False
 
 
 class UploadResponse(BaseModel):

@@ -80,6 +80,56 @@ def test_summarize_unknown_document(client):
     assert client.post("/summarize", json={"doc_id": "nope"}).status_code == 404
 
 
+def test_docs_open_by_default(client):
+    assert client.get("/docs").status_code == 200
+    assert client.get("/openapi.json").status_code == 200
+
+
+def test_no_auth_by_default(client):
+    body = client.get("/health").json()
+    assert body["auth_required"] is False
+
+
+def _secured_client(tmp_path, monkeypatch):
+    import importlib
+
+    monkeypatch.setenv("QA_FAKE_AI", "1")
+    monkeypatch.setenv("QA_DATA_DIR", str(tmp_path / "d"))
+    monkeypatch.setenv("QA_API_KEY", "s3cret")
+    monkeypatch.setenv("QA_DOCS_ENABLED", "false")
+    from app import config
+
+    config.get_settings.cache_clear()
+    from app import main
+
+    importlib.reload(main)
+    from fastapi.testclient import TestClient
+
+    return config, TestClient(main.app)
+
+
+def test_api_key_gate(tmp_path, monkeypatch):
+    config, tc = _secured_client(tmp_path, monkeypatch)
+    with tc as c:
+        assert c.get("/health").json()["auth_required"] is True
+        assert c.get("/documents").status_code == 401
+        assert c.get("/documents", headers={"X-API-Key": "wrong"}).status_code == 401
+        assert c.get("/documents", headers={"X-API-Key": "s3cret"}).status_code == 200
+        assert (
+            c.get("/documents", headers={"Authorization": "Bearer s3cret"}).status_code
+            == 200
+        )
+    config.get_settings.cache_clear()
+
+
+def test_docs_disabled_when_configured(tmp_path, monkeypatch):
+    config, tc = _secured_client(tmp_path, monkeypatch)
+    with tc as c:
+        assert c.get("/docs").status_code == 404
+        assert c.get("/openapi.json").status_code == 404
+    config.get_settings.cache_clear()
+
+
 def test_ask_validates_question_length(client, sample_pdf):
     doc_id = _upload(client, sample_pdf).json()["doc_id"]
     r = client.post("/ask", json={"doc_id": doc_id, "question": "hi"})

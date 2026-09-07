@@ -62,12 +62,20 @@ class Settings(BaseSettings):
     # --- API ---
     cors_origins: str = "*"
 
+    # Access control. Leave unset for local/demo (no auth). When set, every
+    # endpoint except /health and the static UI requires this key via an
+    # "Authorization: Bearer <key>" or "X-API-Key: <key>" header.
+    api_key: str | None = None
+    # Serve /docs, /redoc and /openapi.json. Turn off for a public deployment.
+    docs_enabled: bool = True
+
     @field_validator(
         "openai_api_key",
         "groq_api_key",
         "google_api_key",
         "chat_model",
         "embedding_model",
+        "api_key",
         mode="before",
     )
     @classmethod
@@ -77,6 +85,10 @@ class Settings(BaseSettings):
             v = v.strip()
             return v or None
         return v
+
+    @property
+    def auth_required(self) -> bool:
+        return bool(self.api_key)
 
     @property
     def index_dir(self) -> Path:

@@ -7,7 +7,7 @@ import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -51,11 +51,15 @@ async def lifespan(app: FastAPI):
     yield
 
 
+_docs = get_settings().docs_enabled
 app = FastAPI(
     title="Document Q&A API",
     version=__version__,
     description="Upload a PDF, ask questions, get answers with page-level sources.",
     lifespan=lifespan,
+    docs_url="/docs" if _docs else None,
+    redoc_url="/redoc" if _docs else None,
+    openapi_url="/openapi.json" if _docs else None,
 )
 app.add_middleware(
     CORSMiddleware,
@@ -67,6 +71,25 @@ app.add_middleware(
 
 def _settings() -> Settings:
     return get_settings()
+
+
+def require_key(
+    settings: Settings = Depends(_settings),
+    authorization: str | None = Header(default=None),
+    x_api_key: str | None = Header(default=None),
+) -> None:
+    """Gate for everything except /health and the static UI. A no-op unless
+    QA_API_KEY is configured."""
+    if not settings.auth_required:
+        return
+    supplied = x_api_key or ""
+    if not supplied and authorization and authorization.lower().startswith("bearer "):
+        supplied = authorization[7:]
+    if supplied.strip() != settings.api_key:
+        raise HTTPException(401, "Missing or invalid API key.")
+
+
+guard = [Depends(require_key)]
 
 
 def get_store() -> DocumentStore:
@@ -84,6 +107,7 @@ def health(settings: Settings = Depends(_settings)) -> HealthResponse:
         provider=settings.resolved_provider,
         ai_enabled=settings.ai_enabled,
         fake_ai=settings.is_fake,
+        auth_required=settings.auth_required,
     )
 
 
@@ -104,7 +128,8 @@ def favicon() -> FileResponse:
     "/upload",
     response_model=UploadResponse,
     tags=["documents"],
-    responses={400: {"description": "Invalid file"}},
+    dependencies=guard,
+    responses={400: {"description": "Invalid file"}, 401: {"description": "Bad key"}},
 )
 async def upload_document(
     file: UploadFile = File(...),
@@ -143,7 +168,9 @@ async def upload_document(
     return UploadResponse(**info.model_dump())
 
 
-@app.get("/documents", response_model=DocumentList, tags=["documents"])
+@app.get(
+    "/documents", response_model=DocumentList, tags=["documents"], dependencies=guard
+)
 def list_documents(store: DocumentStore = Depends(get_store)) -> DocumentList:
     return DocumentList(documents=store.list())
 
@@ -152,6 +179,7 @@ def list_documents(store: DocumentStore = Depends(get_store)) -> DocumentList:
     "/documents/{doc_id}",
     response_model=DocumentInfo,
     tags=["documents"],
+    dependencies=guard,
     responses={404: {"description": "Not found"}},
 )
 def get_document(doc_id: str, store: DocumentStore = Depends(get_store)) -> DocumentInfo:
@@ -166,6 +194,7 @@ def get_document(doc_id: str, store: DocumentStore = Depends(get_store)) -> Docu
     status_code=204,
     response_model=None,
     tags=["documents"],
+    dependencies=guard,
     responses={404: {"description": "Not found"}},
 )
 def delete_document(
@@ -184,7 +213,9 @@ def delete_document(
     "/ask",
     response_model=AnswerResponse,
     tags=["qa"],
+    dependencies=guard,
     responses={
+        401: {"description": "Bad key"},
         404: {"description": "Document not found"},
         502: {"description": "Upstream model error"},
     },
@@ -217,7 +248,9 @@ def ask_question(
     "/summarize",
     response_model=SummaryResponse,
     tags=["qa"],
+    dependencies=guard,
     responses={
+        401: {"description": "Bad key"},
         404: {"description": "Document not found"},
         502: {"description": "Upstream model error"},
     },

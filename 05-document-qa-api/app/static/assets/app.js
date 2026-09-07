@@ -9,10 +9,20 @@ const el = (tag, cls, text) => {
   return n;
 };
 
-async function api(path, opts) {
-  const res = await fetch(path, opts);
+function accessKey() { return store.get("qa:key", null); }
+
+async function api(path, opts = {}) {
+  const key = accessKey();
+  const headers = { ...(opts.headers || {}) };
+  if (key) headers["X-API-Key"] = key;
+  const res = await fetch(path, { ...opts, headers });
   let body = null;
   try { body = await res.json(); } catch { /* no body */ }
+  if (res.status === 401) {
+    store.del("qa:key");
+    showKeyModal(true);
+    throw new Error("Access key required");
+  }
   if (!res.ok) throw new Error((body && body.detail) || `${res.status} ${res.statusText}`);
   return body;
 }
@@ -55,6 +65,28 @@ $("#themeToggle").addEventListener("click", () => {
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 });
 
+/* ------------------------------------------------------------------ access key */
+const keyModal = $("#keyModal");
+function showKeyModal(rejected = false) {
+  $("#keyErr").hidden = !rejected;
+  keyModal.hidden = false;
+  $("#keyInput").focus();
+}
+function hideKeyModal() { keyModal.hidden = true; $("#keyInput").value = ""; }
+
+$("#keyForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const val = $("#keyInput").value.trim();
+  if (!val) return;
+  store.set("qa:key", val);
+  hideKeyModal();
+  await boot();
+});
+$("#lockBtn").addEventListener("click", () => {
+  store.del("qa:key");
+  location.reload();
+});
+
 /* ------------------------------------------------------------------ health */
 async function loadHealth() {
   const badge = $("#providerBadge");
@@ -68,6 +100,9 @@ async function loadHealth() {
       badge.className = "badge is-live";
       badge.innerHTML = `<span class="dot"></span>${h.provider}`;
     }
+    $("#lockBtn").hidden = !h.auth_required;
+    $("#apiDocsLink").hidden = h.auth_required;
+    if (h.auth_required && !accessKey()) showKeyModal(false);
   } catch {
     badge.className = "badge is-off";
     badge.innerHTML = '<span class="dot"></span>offline';
@@ -384,6 +419,9 @@ $("#sidebarClose").addEventListener("click", closeSidebar);
 $("#scrim").addEventListener("click", closeSidebar);
 
 /* ------------------------------------------------------------------ boot */
-(async function boot() {
-  await Promise.all([loadHealth(), loadDocs()]);
-})();
+async function boot() {
+  await loadHealth();
+  if (state.provider && state.provider.auth_required && !accessKey()) return;
+  await loadDocs();
+}
+boot();

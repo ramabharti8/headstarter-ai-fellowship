@@ -88,6 +88,7 @@ HTML/CSS/JS in `app/static/`, served by FastAPI):
 - source citations as page chips that expand to show the retrieved passage
 - per-answer latency, copy button, "Summarize document" action
 - light / dark theme, responsive down to mobile
+- unlock prompt when `QA_API_KEY` is set (key kept in `localStorage`, "Lock" to clear)
 
 ## Docker
 
@@ -101,6 +102,22 @@ QA_FAKE_AI=1 docker compose up --build
 
 The `qa_data` volume holds the FAISS indexes and the SQLite database, so uploaded
 documents persist across container restarts.
+
+## Deploying publicly
+
+Two env vars lock the instance down (both optional — unset = open, for local dev):
+
+| Var | Effect |
+|-----|--------|
+| `QA_API_KEY` | Every endpoint except `/health` and the UI shell requires `Authorization: Bearer <key>` or `X-API-Key: <key>`. The web UI shows a one-time unlock prompt and stores the key in `localStorage`. |
+| `QA_DOCS_ENABLED=false` | Hides `/docs`, `/redoc` and `/openapi.json` (they 404). |
+
+```bash
+QA_GROQ_API_KEY=gsk_... QA_API_KEY=$(openssl rand -hex 16) QA_DOCS_ENABLED=false \
+  docker compose up --build
+```
+
+`/health` stays open so container / load-balancer health checks keep working.
 
 ## API examples
 
@@ -118,6 +135,8 @@ curl -X POST http://localhost:8000/ask \
 # 3. List / delete
 curl http://localhost:8000/documents
 curl -X DELETE http://localhost:8000/documents/<doc_id>
+
+# If QA_API_KEY is set, add:  -H "X-API-Key: <key>"
 ```
 
 ## Configuration
