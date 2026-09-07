@@ -133,6 +133,15 @@ Dockerfile, docker-compose.yml
    instruction to answer *only* from that context and say "I don't know"
    otherwise. Retrieved chunks are returned as sources.
 
+### Performance
+
+The embeddings client, the chat client, and loaded FAISS indexes (LRU, 32 docs)
+are created once and reused across requests — a cold `/ask` otherwise spent
+200–500 ms rebuilding clients and re-reading the index from disk before any
+model call. A freshly uploaded document is cached at ingest time, so its first
+question skips the reload entirely. After that, `/ask` latency is essentially
+just the OpenAI round-trip; lower `QA_RETRIEVAL_K` to trim it further.
+
 ## License
 
 MIT © 2026 Rama Bharti

@@ -16,6 +16,7 @@ import hashlib
 import math
 import re
 import shutil
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -71,30 +72,60 @@ class RagEngine:
             chunk_overlap=self.settings.chunk_overlap,
             add_start_index=True,
         )
+        # Long-lived, reused across requests. Building these per request added
+        # ~200-500ms of client/index setup to every /ask.
+        self._embeddings_client: Embeddings | None = None
+        self._llm = None
+        self._store_cache: OrderedDict[str, FAISS] = OrderedDict()
+        self._store_cache_max = 32
 
     # --- providers -----------------------------------------------------
     def _embeddings(self) -> Embeddings:
-        if self.settings.fake_ai:
-            return DeterministicEmbeddings()
-        from langchain_openai import OpenAIEmbeddings
+        if self._embeddings_client is None:
+            if self.settings.fake_ai:
+                self._embeddings_client = DeterministicEmbeddings()
+            else:
+                from langchain_openai import OpenAIEmbeddings
 
-        return OpenAIEmbeddings(
-            model=self.settings.embedding_model,
-            api_key=self.settings.openai_api_key,
-        )
+                self._embeddings_client = OpenAIEmbeddings(
+                    model=self.settings.embedding_model,
+                    api_key=self.settings.openai_api_key,
+                )
+        return self._embeddings_client
+
+    def _chat(self):
+        if self._llm is None:
+            from langchain_openai import ChatOpenAI
+
+            self._llm = ChatOpenAI(
+                model=self.settings.chat_model,
+                api_key=self.settings.openai_api_key,
+                temperature=0,
+                timeout=30,
+            )
+        return self._llm
 
     def _index_path(self, doc_id: str) -> Path:
         return self._index_root / doc_id
 
     def _load(self, doc_id: str) -> FAISS | None:
+        cached = self._store_cache.get(doc_id)
+        if cached is not None:
+            self._store_cache.move_to_end(doc_id)
+            return cached
+
         path = self._index_path(doc_id)
         if not path.exists():
             return None
-        return FAISS.load_local(
+        store = FAISS.load_local(
             str(path),
             self._embeddings(),
             allow_dangerous_deserialization=True,
         )
+        self._store_cache[doc_id] = store
+        if len(self._store_cache) > self._store_cache_max:
+            self._store_cache.popitem(last=False)
+        return store
 
     # --- ingestion ---------------------------------------------------
     def ingest_pdf(self, path: Path, doc_id: str) -> IngestResult:
@@ -106,9 +137,11 @@ class RagEngine:
             c.metadata["doc_id"] = doc_id
         store = FAISS.from_documents(chunks, self._embeddings())
         store.save_local(str(self._index_path(doc_id)))
+        self._store_cache[doc_id] = store  # ready for the first /ask, no reload
         return IngestResult(pages=len(pages), chunks=len(chunks))
 
     def delete(self, doc_id: str) -> None:
+        self._store_cache.pop(doc_id, None)
         shutil.rmtree(self._index_path(doc_id), ignore_errors=True)
 
     # --- querying --------------------------------------------------
@@ -127,12 +160,5 @@ class RagEngine:
             preview = context[:400].replace("\n", " ")
             return f"[fake-ai] Based on the document: {preview}", docs
 
-        from langchain_openai import ChatOpenAI
-
-        llm = ChatOpenAI(
-            model=self.settings.chat_model,
-            api_key=self.settings.openai_api_key,
-            temperature=0,
-        )
         prompt = _ANSWER_PROMPT.format(context=context, question=question)
-        return llm.invoke(prompt).content, docs
+        return self._chat().invoke(prompt).content, docs
