@@ -180,6 +180,7 @@ def delete_document(
 )
 def ask_question(
     req: QuestionRequest,
+    settings: Settings = Depends(_settings),
     store: DocumentStore = Depends(get_store),
     rag: RagEngine = Depends(get_rag),
 ) -> AnswerResponse:
@@ -194,8 +195,17 @@ def ask_question(
     sources = [
         Source(
             page=d.metadata.get("page"),
-            snippet=d.page_content[:240].strip(),
+            snippet=_excerpt(d.page_content, settings.snippet_chars),
         )
         for d in docs
     ]
     return AnswerResponse(answer=answer, sources=sources)
+
+
+def _excerpt(text: str, limit: int) -> str:
+    """Collapse whitespace and clip to `limit` chars on a word boundary."""
+    clean = " ".join(text.split())
+    if len(clean) <= limit:
+        return clean
+    cut = clean[:limit].rsplit(" ", 1)[0]
+    return f"{cut}…"

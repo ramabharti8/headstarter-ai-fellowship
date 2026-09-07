@@ -140,6 +140,7 @@ class RagEngine:
                 api_key=self.settings.openai_api_key,
                 temperature=0,
                 timeout=30,
+                max_tokens=self.settings.max_answer_tokens,
             )
         elif provider == "groq":
             from langchain_groq import ChatGroq
@@ -149,6 +150,7 @@ class RagEngine:
                 api_key=self.settings.groq_api_key,
                 temperature=0,
                 timeout=30,
+                max_tokens=self.settings.max_answer_tokens,
             )
         elif provider == "gemini":
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -158,6 +160,7 @@ class RagEngine:
                 google_api_key=self.settings.google_api_key,
                 temperature=0,
                 timeout=30,
+                max_output_tokens=self.settings.max_answer_tokens,
             )
         else:  # pragma: no cover
             raise ValueError(f"Provider {provider} has no chat model")

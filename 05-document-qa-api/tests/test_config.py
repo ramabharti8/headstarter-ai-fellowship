@@ -42,9 +42,7 @@ def test_explicit_provider_overrides_auto():
 
 
 def test_default_models_per_provider():
-    assert (
-        _s(provider="groq", groq_api_key="x").active_chat_model == "openai/gpt-oss-20b"
-    )
+    assert _s(provider="groq", groq_api_key="x").active_chat_model == "openai/gpt-oss-20b"
     assert _s(provider="groq", groq_api_key="x").active_embedding_model == "local"
     assert (
         _s(provider="gemini", google_api_key="x").active_chat_model == "gemini-2.0-flash"

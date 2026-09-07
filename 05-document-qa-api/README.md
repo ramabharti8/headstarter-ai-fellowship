@@ -107,9 +107,15 @@ curl -X DELETE http://localhost:8000/documents/<doc_id>
 ## Configuration
 
 All settings are environment variables prefixed `QA_` (see
-[`.env.example`](.env.example)): `QA_OPENAI_API_KEY`, `QA_CHAT_MODEL`,
+[`.env.example`](.env.example)): provider keys, `QA_PROVIDER`, `QA_CHAT_MODEL`,
 `QA_EMBEDDING_MODEL`, `QA_FAKE_AI`, `QA_DATA_DIR`, `QA_CHUNK_SIZE`,
-`QA_CHUNK_OVERLAP`, `QA_RETRIEVAL_K`, `QA_MAX_UPLOAD_MB`, `QA_CORS_ORIGINS`.
+`QA_CHUNK_OVERLAP`, `QA_RETRIEVAL_K`, `QA_MAX_ANSWER_TOKENS`, `QA_SNIPPET_CHARS`,
+`QA_MAX_UPLOAD_MB`, `QA_CORS_ORIGINS`.
+
+**Getting fuller answers.** RAG only shows the model the chunks it retrieves, so
+a broad question ("summarise the whole book") is limited by `QA_RETRIEVAL_K`
+(default 6). Raise it to 10–12 for wide questions, or ask narrower ones. The
+answer length itself is capped by `QA_MAX_ANSWER_TOKENS`.
 
 ## Development
 
