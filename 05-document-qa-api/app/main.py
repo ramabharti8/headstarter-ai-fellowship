@@ -40,10 +40,10 @@ async def lifespan(app: FastAPI):
     app.state.store = DocumentStore(settings.db_path)
     app.state.rag = RagEngine(settings)
     log.info(
-        "Document Q&A API v%s ready (ai_enabled=%s fake_ai=%s)",
+        "Document Q&A API v%s ready (provider=%s model=%s)",
         __version__,
-        settings.ai_enabled,
-        settings.fake_ai,
+        settings.resolved_provider,
+        settings.active_chat_model or "-",
     )
     yield
 
