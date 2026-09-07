@@ -26,25 +26,36 @@ pages they came from. Retrieval-augmented generation (RAG) over
 | Layer      | Choice                                         | Why |
 |------------|------------------------------------------------|-----|
 | API        | FastAPI + Uvicorn                              | async, typed, auto OpenAPI docs |
-| Embeddings | OpenAI `text-embedding-3-small`                | cheaper and better than `ada-002` |
-| LLM        | OpenAI `gpt-4o-mini`                           | strong RAG answers at low cost |
+| LLM        | pluggable — OpenAI / Groq / Gemini             | pick per key; `auto` mode selects one |
+| Embeddings | OpenAI, Gemini, or local fastembed (ONNX)      | local option is free and needs no key |
 | Vectors    | FAISS (persisted to disk, one index per doc)   | prebuilt wheels on every OS, survives restarts, ships in Docker |
 | Chunking   | `RecursiveCharacterTextSplitter` (1000 / 200) | keeps sentences intact, overlap preserves context |
 | Metadata   | SQLite                                         | durable document list without a DB server |
 
 > **Why FAISS and not Chroma?** The task brief names ChromaDB, but Chroma's
 > `hnswlib` dependency has no prebuilt wheel for Windows and needs a C++
-> toolchain to install. FAISS gives the same similarity-search semantics with
-> zero-friction installs everywhere, which matters for a project meant to run on
-> any machine in an interview. Swapping back to Chroma is a ~15-line change in
-> `app/rag.py`.
+> toolchain. FAISS gives the same similarity-search semantics with zero-friction
+> installs everywhere. Swapping back is a ~15-line change in `app/rag.py`.
 
-### Demo / offline mode
+## Model providers
 
-Set `QA_FAKE_AI=1` and the whole pipeline runs with **no API key and no
-network**: deterministic local embeddings and a stub answerer that quotes the
-retrieved context. This is what the test suite and CI use, and it's handy for
-demoing the system without spending credits.
+Set `QA_PROVIDER` (or leave it `auto`, which picks the first key it finds):
+
+| `QA_PROVIDER` | Key env var        | Cost        | Chat model (default)        | Embeddings |
+|---------------|--------------------|-------------|-----------------------------|------------|
+| `openai`      | `QA_OPENAI_API_KEY`| paid        | `gpt-4o-mini`               | `text-embedding-3-small` |
+| `groq`        | `QA_GROQ_API_KEY`  | **free**    | `llama-3.3-70b-versatile`   | local fastembed `bge-small-en-v1.5` (no key) |
+| `gemini`      | `QA_GOOGLE_API_KEY`| **free tier** | `gemini-2.0-flash`        | `models/text-embedding-004` |
+| `fake`        | none               | free/offline | deterministic stub         | deterministic hash vectors |
+
+- **Groq key:** <https://console.groq.com/keys> (no card). First question triggers
+  a one-time ~90 MB fastembed model download, then it's cached.
+- **Gemini key:** <https://aistudio.google.com/apikey> (no card).
+- `QA_FAKE_AI=1` forces `fake` regardless of keys — used by the tests and CI.
+
+> ⚠️ A FAISS index is tied to the embedding model that built it. If you switch
+> providers, delete `data/` (or re-upload) so indexes are rebuilt with the new
+> embeddings — otherwise `/ask` will fail with a dimension mismatch.
 
 ## Quick start
 
@@ -53,18 +64,18 @@ cd 05-document-qa-api
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
 
-cp .env.example .env          # add QA_OPENAI_API_KEY  (or set QA_FAKE_AI=1)
+cp .env.example .env          # add one provider key, or set QA_FAKE_AI=1
 uvicorn app.main:app --reload
 ```
 
 Open <http://localhost:8000> for the UI or <http://localhost:8000/docs> for
-Swagger.
+Swagger. `GET /health` shows the active provider.
 
 ## Docker
 
 ```bash
-# with a real key
-QA_OPENAI_API_KEY=sk-... docker compose up --build
+# free provider
+QA_GROQ_API_KEY=gsk_... docker compose up --build
 
 # offline demo
 QA_FAKE_AI=1 docker compose up --build

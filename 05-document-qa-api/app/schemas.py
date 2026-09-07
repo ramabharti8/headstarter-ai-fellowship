@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 class HealthResponse(BaseModel):
     status: str = "ok"
     version: str
+    provider: str
     ai_enabled: bool
     fake_ai: bool
 

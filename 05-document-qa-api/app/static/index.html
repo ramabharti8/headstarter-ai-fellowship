@@ -52,7 +52,7 @@ const api = (p, opts) => fetch(p, opts).then(async r => {
 });
 
 api("/health").then(h => {
-  $("status").textContent = h.fake_ai ? "demo mode" : (h.ai_enabled ? "ready" : "no API key");
+  $("status").textContent = h.fake_ai ? "demo mode (fake-ai)" : h.provider;
 }).catch(() => $("status").textContent = "offline");
 
 $("uploadBtn").onclick = async () => {

@@ -8,9 +8,14 @@ pydantic-settings==2.7.1
 # --- RAG stack ---
 langchain==0.3.14
 langchain-core==0.3.29
-langchain-openai==0.2.14
 langchain-community==0.3.14
 langchain-text-splitters==0.3.4
 faiss-cpu==1.9.0.post1
 pypdf==5.1.0
+
+# --- Providers (any one is enough at runtime) ---
+langchain-openai==0.2.14
 tiktoken==0.8.0
+langchain-groq==0.2.3
+langchain-google-genai==2.0.8
+fastembed==0.4.2          # local ONNX embeddings for the Groq provider

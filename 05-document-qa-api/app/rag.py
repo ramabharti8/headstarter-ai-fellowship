@@ -1,8 +1,11 @@
 """RAG pipeline: PDF -> chunks -> vector index -> retrieval-augmented answer.
 
-The module is provider-agnostic. With ``QA_FAKE_AI=1`` it uses a deterministic
-local embedding + a stub answerer so the whole pipeline runs offline (tests, CI,
-interview demos without burning API credits).
+The module is provider-agnostic. Set ``QA_PROVIDER`` to ``openai``, ``groq``,
+``gemini`` or ``fake`` (or ``auto`` to pick whichever key is present). ``fake``
+uses a deterministic local embedding + a stub answerer so the whole pipeline
+runs offline (tests, CI, interview demos without burning API credits). ``groq``
+uses Groq for the chat model and local fastembed vectors (Groq has no embeddings
+API).
 
 The vector store is FAISS, persisted to ``<data_dir>/faiss/<doc_id>``. FAISS was
 chosen over Chroma because its native dependency ships prebuilt wheels on every
@@ -81,28 +84,73 @@ class RagEngine:
 
     # --- providers -----------------------------------------------------
     def _embeddings(self) -> Embeddings:
-        if self._embeddings_client is None:
-            if self.settings.fake_ai:
-                self._embeddings_client = DeterministicEmbeddings()
-            else:
-                from langchain_openai import OpenAIEmbeddings
+        if self._embeddings_client is not None:
+            return self._embeddings_client
 
-                self._embeddings_client = OpenAIEmbeddings(
-                    model=self.settings.embedding_model,
-                    api_key=self.settings.openai_api_key,
-                )
+        provider = self.settings.resolved_provider
+        if provider == "fake":
+            self._embeddings_client = DeterministicEmbeddings()
+        elif provider == "openai":
+            from langchain_openai import OpenAIEmbeddings
+
+            self._embeddings_client = OpenAIEmbeddings(
+                model=self.settings.active_embedding_model,
+                api_key=self.settings.openai_api_key,
+            )
+        elif provider == "gemini":
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+            self._embeddings_client = GoogleGenerativeAIEmbeddings(
+                model=self.settings.active_embedding_model,
+                google_api_key=self.settings.google_api_key,
+            )
+        elif provider == "groq":
+            # Groq has no embeddings API — embed locally with fastembed (ONNX,
+            # no API key, no torch). The model downloads once (~90 MB) then caches.
+            from langchain_community.embeddings import FastEmbedEmbeddings
+
+            self._embeddings_client = FastEmbedEmbeddings(
+                model_name=self.settings.local_embedding_model,
+            )
+        else:  # pragma: no cover - guarded by Literal
+            raise ValueError(f"Unknown provider: {provider}")
         return self._embeddings_client
 
     def _chat(self):
-        if self._llm is None:
+        if self._llm is not None:
+            return self._llm
+
+        provider = self.settings.resolved_provider
+        model = self.settings.active_chat_model
+        if provider == "openai":
             from langchain_openai import ChatOpenAI
 
             self._llm = ChatOpenAI(
-                model=self.settings.chat_model,
+                model=model,
                 api_key=self.settings.openai_api_key,
                 temperature=0,
                 timeout=30,
             )
+        elif provider == "groq":
+            from langchain_groq import ChatGroq
+
+            self._llm = ChatGroq(
+                model=model,
+                api_key=self.settings.groq_api_key,
+                temperature=0,
+                timeout=30,
+            )
+        elif provider == "gemini":
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            self._llm = ChatGoogleGenerativeAI(
+                model=model,
+                google_api_key=self.settings.google_api_key,
+                temperature=0,
+                timeout=30,
+            )
+        else:  # pragma: no cover
+            raise ValueError(f"Provider {provider} has no chat model")
         return self._llm
 
     def _index_path(self, doc_id: str) -> Path:
@@ -156,7 +204,7 @@ class RagEngine:
 
         context = "\n\n---\n\n".join(d.page_content for d in docs)
 
-        if self.settings.fake_ai:
+        if self.settings.is_fake:
             preview = context[:400].replace("\n", " ")
             return f"[fake-ai] Based on the document: {preview}", docs
 

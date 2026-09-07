@@ -4,10 +4,13 @@ services:
     ports:
       - "8000:8000"
     environment:
+      QA_PROVIDER: ${QA_PROVIDER:-auto}
       QA_OPENAI_API_KEY: ${QA_OPENAI_API_KEY:-}
+      QA_GROQ_API_KEY: ${QA_GROQ_API_KEY:-}
+      QA_GOOGLE_API_KEY: ${QA_GOOGLE_API_KEY:-}
       QA_FAKE_AI: ${QA_FAKE_AI:-0}
-      QA_CHAT_MODEL: ${QA_CHAT_MODEL:-gpt-4o-mini}
-      QA_EMBEDDING_MODEL: ${QA_EMBEDDING_MODEL:-text-embedding-3-small}
+      QA_CHAT_MODEL: ${QA_CHAT_MODEL:-}
+      QA_EMBEDDING_MODEL: ${QA_EMBEDDING_MODEL:-}
     volumes:
       - qa_data:/app/data
     restart: unless-stopped

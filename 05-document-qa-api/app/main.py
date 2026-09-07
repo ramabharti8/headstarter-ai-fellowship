@@ -78,8 +78,9 @@ def get_rag() -> RagEngine:
 def health(settings: Settings = Depends(_settings)) -> HealthResponse:
     return HealthResponse(
         version=__version__,
+        provider=settings.resolved_provider,
         ai_enabled=settings.ai_enabled,
-        fake_ai=settings.fake_ai,
+        fake_ai=settings.is_fake,
     )
 
 
@@ -92,7 +93,7 @@ def index() -> FileResponse:
     "/upload",
     response_model=UploadResponse,
     tags=["documents"],
-    responses={400: {"description": "Invalid file"}, 503: {"description": "AI disabled"}},
+    responses={400: {"description": "Invalid file"}},
 )
 async def upload_document(
     file: UploadFile = File(...),
@@ -100,8 +101,6 @@ async def upload_document(
     store: DocumentStore = Depends(get_store),
     rag: RagEngine = Depends(get_rag),
 ) -> UploadResponse:
-    if not settings.ai_enabled:
-        raise HTTPException(503, "AI provider not configured. Set QA_OPENAI_API_KEY.")
     if not (file.filename or "").lower().endswith(".pdf"):
         raise HTTPException(400, "Only PDF files are supported.")
 
@@ -176,21 +175,22 @@ def delete_document(
     tags=["qa"],
     responses={
         404: {"description": "Document not found"},
-        503: {"description": "AI disabled"},
+        502: {"description": "Upstream model error"},
     },
 )
 def ask_question(
     req: QuestionRequest,
-    settings: Settings = Depends(_settings),
     store: DocumentStore = Depends(get_store),
     rag: RagEngine = Depends(get_rag),
 ) -> AnswerResponse:
-    if not settings.ai_enabled:
-        raise HTTPException(503, "AI provider not configured. Set QA_OPENAI_API_KEY.")
     if not store.get(req.doc_id):
         raise HTTPException(404, "Document not found.")
 
-    answer, docs = rag.answer(req.doc_id, req.question)
+    try:
+        answer, docs = rag.answer(req.doc_id, req.question)
+    except Exception as exc:  # noqa: BLE001 - surface provider failures cleanly
+        log.exception("answer failed")
+        raise HTTPException(502, f"Model provider error: {exc}") from exc
     sources = [
         Source(
             page=d.metadata.get("page"),
