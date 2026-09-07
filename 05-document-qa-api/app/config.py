@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     # --- API ---
     cors_origins: str = "*"
 
+    # --- Abuse protection (applied only when QA_API_KEY is NOT set) ---
+    rate_limit_per_min: int = 20  # requests per client IP per minute; 0 disables
+    uploads_per_day_per_ip: int = 10  # 0 disables
+    max_documents: int = 30  # total kept; oldest auto-pruned on new upload. 0 = ∞
+    trust_forwarded: bool = True  # read client IP from X-Forwarded-For
+
     # Access control. Leave unset for local/demo (no auth). When set, every
     # endpoint except /health and the static UI requires this key via an
     # "Authorization: Bearer <key>" or "X-API-Key: <key>" header.

@@ -7,13 +7,23 @@ import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, Header, HTTPException, Response, UploadFile
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .config import Settings, get_settings
+from .limits import SlidingWindowLimiter
 from .rag import RagEngine
 from .schemas import (
     AnswerResponse,
@@ -89,7 +99,43 @@ def require_key(
         raise HTTPException(401, "Missing or invalid API key.")
 
 
-guard = [Depends(require_key)]
+_rl = SlidingWindowLimiter(get_settings().rate_limit_per_min, 60)
+_upload_rl = SlidingWindowLimiter(get_settings().uploads_per_day_per_ip, 86_400)
+
+
+def _client_ip(request: Request, settings: Settings) -> str:
+    if settings.trust_forwarded:
+        xff = request.headers.get("x-forwarded-for")
+        if xff:
+            return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def rate_limit(request: Request, settings: Settings = Depends(_settings)) -> None:
+    # Gated deployments (QA_API_KEY set) trust the caller; skip limiting.
+    if settings.auth_required or not _rl.enabled:
+        return
+    ip = _client_ip(request, settings)
+    if not _rl.allow(ip):
+        raise HTTPException(
+            429,
+            "Rate limit exceeded — slow down and try again shortly.",
+            headers={"Retry-After": str(_rl.retry_after(ip))},
+        )
+
+
+def upload_quota(request: Request, settings: Settings = Depends(_settings)) -> None:
+    if settings.auth_required or not _upload_rl.enabled:
+        return
+    ip = _client_ip(request, settings)
+    if not _upload_rl.allow(ip):
+        raise HTTPException(
+            429,
+            f"Daily upload limit reached ({settings.uploads_per_day_per_ip} per day).",
+        )
+
+
+guard = [Depends(require_key), Depends(rate_limit)]
 
 
 def get_store() -> DocumentStore:
@@ -128,8 +174,12 @@ def favicon() -> FileResponse:
     "/upload",
     response_model=UploadResponse,
     tags=["documents"],
-    dependencies=guard,
-    responses={400: {"description": "Invalid file"}, 401: {"description": "Bad key"}},
+    dependencies=[*guard, Depends(upload_quota)],
+    responses={
+        400: {"description": "Invalid file"},
+        401: {"description": "Bad key"},
+        429: {"description": "Rate / quota limit"},
+    },
 )
 async def upload_document(
     file: UploadFile = File(...),
@@ -165,7 +215,18 @@ async def upload_document(
 
     info = store.add(doc_id, file.filename, result.pages, result.chunks)
     log.info("ingested %s (%s pages, %s chunks)", doc_id, result.pages, result.chunks)
+    _prune_documents(settings, store, rag)
     return UploadResponse(**info.model_dump())
+
+
+def _prune_documents(settings: Settings, store: DocumentStore, rag: RagEngine) -> None:
+    """Keep only the newest `max_documents` so a public demo can't fill the disk."""
+    if settings.max_documents <= 0:
+        return
+    for stale in store.list()[settings.max_documents :]:  # list() is newest-first
+        store.delete(stale.doc_id)
+        rag.delete(stale.doc_id)
+        log.info("pruned old document %s", stale.doc_id)
 
 
 @app.get(

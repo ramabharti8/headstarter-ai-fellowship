@@ -11,8 +11,7 @@ pages they came from. Retrieval-augmented generation (RAG) over
 ## What it does
 
 - **`POST /upload`** — accepts a PDF, splits it into overlapping chunks, embeds
-  them, and stores the vectors in a persistent Chroma collection. Returns a
-  `doc_id`.
+  them, and stores the vectors in a persistent FAISS index. Returns a `doc_id`.
 - **`POST /ask`** — retrieves the most relevant chunks for a question and asks
   the LLM to answer *using only that context*. Returns the answer plus source
   snippets with page numbers.
@@ -105,19 +104,40 @@ documents persist across container restarts.
 
 ## Deploying publicly
 
-Two env vars lock the instance down (both optional — unset = open, for local dev):
+Everything below is optional — unset means fully open, which is right for local
+dev. `/health` always stays open for load-balancer probes.
 
-| Var | Effect |
-|-----|--------|
-| `QA_API_KEY` | Every endpoint except `/health` and the UI shell requires `Authorization: Bearer <key>` or `X-API-Key: <key>`. The web UI shows a one-time unlock prompt and stores the key in `localStorage`. |
-| `QA_DOCS_ENABLED=false` | Hides `/docs`, `/redoc` and `/openapi.json` (they 404). |
+### Open demo, protected from abuse (recommended)
+
+Leave `QA_API_KEY` unset so anyone can try it, and rely on the built-in limits
+(all per-client-IP, all tunable, no external store):
+
+| Var | Default | Effect |
+|-----|---------|--------|
+| `QA_RATE_LIMIT_PER_MIN` | `20` | 429 once an IP exceeds this many requests/minute |
+| `QA_UPLOADS_PER_DAY_PER_IP` | `10` | 429 on further uploads that day |
+| `QA_MAX_DOCUMENTS` | `30` | total documents kept; the oldest is auto-deleted on each new upload |
+| `QA_TRUST_FORWARDED` | `true` | read the client IP from `X-Forwarded-For` (needed behind Render/Railway/Fly) |
+| `QA_DOCS_ENABLED` | `true` | set `false` to 404 `/docs`, `/redoc`, `/openapi.json` |
+
+Your Groq/Gemini free-tier quota is the final backstop: if it's exhausted the
+API just returns 502 for a while — it can't run up a bill.
+
+```bash
+QA_GROQ_API_KEY=gsk_... QA_DOCS_ENABLED=false docker compose up --build
+```
+
+### Private (single key)
+
+Set `QA_API_KEY` and every endpoint (except `/health` and the UI page) requires
+`Authorization: Bearer <key>` or `X-API-Key: <key>`. The web UI shows a one-time
+unlock prompt and keeps the key in `localStorage` ("Lock" clears it). A holder of
+the key also bypasses all the rate limits above.
 
 ```bash
 QA_GROQ_API_KEY=gsk_... QA_API_KEY=$(openssl rand -hex 16) QA_DOCS_ENABLED=false \
   docker compose up --build
 ```
-
-`/health` stays open so container / load-balancer health checks keep working.
 
 ## API examples
 
@@ -170,6 +190,7 @@ app/
   schemas.py    request/response models
   rag.py        chunk -> embed -> FAISS retrieve -> answer / summarize
   store.py      SQLite document metadata
+  limits.py     per-IP sliding-window rate limiter (public deployments)
   static/       chat-style web UI (index.html + assets/)
 tests/          API + config tests, run fully offline
 Dockerfile, docker-compose.yml

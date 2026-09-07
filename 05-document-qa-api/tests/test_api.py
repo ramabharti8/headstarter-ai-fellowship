@@ -90,13 +90,13 @@ def test_no_auth_by_default(client):
     assert body["auth_required"] is False
 
 
-def _secured_client(tmp_path, monkeypatch):
+def _client_with(tmp_path, monkeypatch, **env):
     import importlib
 
     monkeypatch.setenv("QA_FAKE_AI", "1")
     monkeypatch.setenv("QA_DATA_DIR", str(tmp_path / "d"))
-    monkeypatch.setenv("QA_API_KEY", "s3cret")
-    monkeypatch.setenv("QA_DOCS_ENABLED", "false")
+    for k, v in env.items():
+        monkeypatch.setenv(k, str(v))
     from app import config
 
     config.get_settings.cache_clear()
@@ -106,6 +106,22 @@ def _secured_client(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
 
     return config, TestClient(main.app)
+
+
+def _secured_client(tmp_path, monkeypatch):
+    return _client_with(
+        tmp_path, monkeypatch, QA_API_KEY="s3cret", QA_DOCS_ENABLED="false"
+    )
+
+
+def _pdf_bytes():
+    from fpdf import FPDF
+
+    p = FPDF()
+    p.add_page()
+    p.set_font("Helvetica", size=12)
+    p.multi_cell(0, 8, "Revenue grew 42 percent. Churn fell to 3 percent.")
+    return bytes(p.output())
 
 
 def test_api_key_gate(tmp_path, monkeypatch):
@@ -127,6 +143,55 @@ def test_docs_disabled_when_configured(tmp_path, monkeypatch):
     with tc as c:
         assert c.get("/docs").status_code == 404
         assert c.get("/openapi.json").status_code == 404
+    config.get_settings.cache_clear()
+
+
+def test_rate_limit_kicks_in(tmp_path, monkeypatch):
+    config, tc = _client_with(tmp_path, monkeypatch, QA_RATE_LIMIT_PER_MIN=3)
+    with tc as c:
+        codes = [c.get("/documents").status_code for _ in range(5)]
+    assert codes[:3] == [200, 200, 200]
+    assert codes[3] == 429 and codes[4] == 429
+    config.get_settings.cache_clear()
+
+
+def test_rate_limit_skipped_with_api_key(tmp_path, monkeypatch):
+    config, tc = _client_with(
+        tmp_path, monkeypatch, QA_RATE_LIMIT_PER_MIN=2, QA_API_KEY="k"
+    )
+    with tc as c:
+        h = {"X-API-Key": "k"}
+        codes = [c.get("/documents", headers=h).status_code for _ in range(5)]
+    assert codes == [200] * 5
+    config.get_settings.cache_clear()
+
+
+def test_max_documents_prunes_oldest(tmp_path, monkeypatch):
+    config, tc = _client_with(tmp_path, monkeypatch, QA_MAX_DOCUMENTS=2)
+    pdf = _pdf_bytes()
+    with tc as c:
+        ids = []
+        for i in range(3):
+            r = c.post("/upload", files={"file": (f"d{i}.pdf", pdf, "application/pdf")})
+            ids.append(r.json()["doc_id"])
+        listed = {d["doc_id"] for d in c.get("/documents").json()["documents"]}
+    assert len(listed) == 2
+    assert ids[0] not in listed  # oldest pruned
+    assert ids[2] in listed
+    config.get_settings.cache_clear()
+
+
+def test_daily_upload_quota(tmp_path, monkeypatch):
+    config, tc = _client_with(tmp_path, monkeypatch, QA_UPLOADS_PER_DAY_PER_IP=2)
+    pdf = _pdf_bytes()
+    with tc as c:
+        codes = [
+            c.post(
+                "/upload", files={"file": (f"d{i}.pdf", pdf, "application/pdf")}
+            ).status_code
+            for i in range(3)
+        ]
+    assert codes == [200, 200, 429]
     config.get_settings.cache_clear()
 
 
