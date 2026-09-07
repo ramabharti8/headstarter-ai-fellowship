@@ -122,6 +122,16 @@ class RagEngine:
 
         provider = self.settings.resolved_provider
         model = self.settings.active_chat_model
+        key = self.settings.api_key_for(provider)
+        if provider != "fake" and not key:
+            env_name = {"gemini": "QA_GOOGLE_API_KEY"}.get(
+                provider, f"QA_{provider.upper()}_API_KEY"
+            )
+            raise RuntimeError(
+                f"Provider is '{provider}' but {env_name} is not set. Add it to "
+                f".env and fully restart the server (uvicorn --reload does not "
+                f"reload .env changes)."
+            )
         if provider == "openai":
             from langchain_openai import ChatOpenAI
 

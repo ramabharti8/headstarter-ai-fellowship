@@ -44,12 +44,14 @@ Set `QA_PROVIDER` (or leave it `auto`, which picks the first key it finds):
 | `QA_PROVIDER` | Key env var        | Cost        | Chat model (default)        | Embeddings |
 |---------------|--------------------|-------------|-----------------------------|------------|
 | `openai`      | `QA_OPENAI_API_KEY`| paid        | `gpt-4o-mini`               | `text-embedding-3-small` |
-| `groq`        | `QA_GROQ_API_KEY`  | **free**    | `llama-3.3-70b-versatile`   | local fastembed `bge-small-en-v1.5` (no key) |
+| `groq`        | `QA_GROQ_API_KEY`  | **free**    | `openai/gpt-oss-20b`        | local fastembed `bge-small-en-v1.5` (no key) |
 | `gemini`      | `QA_GOOGLE_API_KEY`| **free tier** | `gemini-2.0-flash`        | `models/text-embedding-004` |
 | `fake`        | none               | free/offline | deterministic stub         | deterministic hash vectors |
 
 - **Groq key:** <https://console.groq.com/keys> (no card). First question triggers
-  a one-time ~90 MB fastembed model download, then it's cached.
+  a one-time ~90 MB fastembed model download, then it's cached. Groq rotates its
+  hosted models — if `openai/gpt-oss-20b` ever 404s, set `QA_CHAT_MODEL` to any id
+  from <https://console.groq.com/docs/models>.
 - **Gemini key:** <https://aistudio.google.com/apikey> (no card).
 - `QA_FAKE_AI=1` forces `fake` regardless of keys — used by the tests and CI.
 

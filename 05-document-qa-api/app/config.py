@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Provider = Literal["openai", "groq", "gemini", "fake"]
@@ -15,7 +15,9 @@ Provider = Literal["openai", "groq", "gemini", "fake"]
 # run on-device via fastembed (no API, no key) — Groq has no embeddings endpoint.
 _CHAT_DEFAULTS: dict[str, str] = {
     "openai": "gpt-4o-mini",
-    "groq": "llama-3.3-70b-versatile",
+    # Groq rotates its hosted models; gpt-oss-20b is fast and free. Larger
+    # option: "openai/gpt-oss-120b". Check https://console.groq.com/docs/models
+    "groq": "openai/gpt-oss-20b",
     "gemini": "gemini-2.0-flash",
 }
 _EMBED_DEFAULTS: dict[str, str] = {
@@ -56,6 +58,22 @@ class Settings(BaseSettings):
 
     # --- API ---
     cors_origins: str = "*"
+
+    @field_validator(
+        "openai_api_key",
+        "groq_api_key",
+        "google_api_key",
+        "chat_model",
+        "embedding_model",
+        mode="before",
+    )
+    @classmethod
+    def _blank_to_none(cls, v: object) -> object:
+        # An empty or whitespace-only env var ("QA_GROQ_API_KEY=") means "unset".
+        if isinstance(v, str):
+            v = v.strip()
+            return v or None
+        return v
 
     @property
     def index_dir(self) -> Path:

@@ -43,8 +43,7 @@ def test_explicit_provider_overrides_auto():
 
 def test_default_models_per_provider():
     assert (
-        _s(provider="groq", groq_api_key="x").active_chat_model
-        == "llama-3.3-70b-versatile"
+        _s(provider="groq", groq_api_key="x").active_chat_model == "openai/gpt-oss-20b"
     )
     assert _s(provider="groq", groq_api_key="x").active_embedding_model == "local"
     assert (
