@@ -1,0 +1,20 @@
+[project]
+name = "document-qa-api"
+version = "1.0.0"
+description = "Upload a PDF, ask natural-language questions, get answers with page sources (RAG)."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["B008"]  # FastAPI Depends() in defaults
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning"]

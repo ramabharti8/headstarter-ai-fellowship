@@ -1,0 +1,16 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      QA_OPENAI_API_KEY: ${QA_OPENAI_API_KEY:-}
+      QA_FAKE_AI: ${QA_FAKE_AI:-0}
+      QA_CHAT_MODEL: ${QA_CHAT_MODEL:-gpt-4o-mini}
+      QA_EMBEDDING_MODEL: ${QA_EMBEDDING_MODEL:-text-embedding-3-small}
+    volumes:
+      - qa_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  qa_data:
