@@ -22,8 +22,8 @@ pages they came from. Retrieval-augmented generation (RAG) over
   model calls — slower than `/ask`. Use for "summarise the whole book".
 - **`GET /documents`**, **`GET /documents/{id}`**, **`DELETE /documents/{id}`** —
   manage uploaded documents. Metadata is kept in SQLite so it survives restarts.
-- **`GET /health`** — liveness + whether an AI provider is configured.
-- **`GET /`** — a minimal browser UI for demos (upload + ask).
+- **`GET /health`** — liveness + the active provider.
+- **`GET /`** — a chat-style web UI (see below).
 
 ## Tech stack
 
@@ -76,6 +76,18 @@ uvicorn app.main:app --reload
 
 Open <http://localhost:8000> for the UI or <http://localhost:8000/docs> for
 Swagger. `GET /health` shows the active provider.
+
+## Web UI
+
+`GET /` serves a single-page, chat-style client (no build step — plain
+HTML/CSS/JS in `app/static/`, served by FastAPI):
+
+- drag-and-drop PDF upload, document list with delete
+- a conversation thread per document, persisted in `localStorage`
+- Markdown-rendered answers (tables, lists, code) via `marked` + `DOMPurify`
+- source citations as page chips that expand to show the retrieved passage
+- per-answer latency, copy button, "Summarize document" action
+- light / dark theme, responsive down to mobile
 
 ## Docker
 
@@ -134,13 +146,13 @@ make fmt      # auto-fix
 
 ```
 app/
-  main.py     FastAPI app + routes
-  config.py   pydantic-settings configuration
-  schemas.py  request/response models
-  rag.py      chunk -> embed -> FAISS retrieve -> answer (OpenAI or offline stub)
-  store.py    SQLite document metadata
-  static/     demo UI
-tests/        API tests, run fully offline
+  main.py       FastAPI app + routes
+  config.py     pydantic-settings configuration
+  schemas.py    request/response models
+  rag.py        chunk -> embed -> FAISS retrieve -> answer / summarize
+  store.py      SQLite document metadata
+  static/       chat-style web UI (index.html + assets/)
+tests/          API + config tests, run fully offline
 Dockerfile, docker-compose.yml
 ```
 

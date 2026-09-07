@@ -21,6 +21,17 @@ def test_index_served(client):
     assert "Document Q&amp;A" in r.text or "Document Q&A" in r.text
 
 
+def test_static_assets_served(client):
+    for path, ctype in [
+        ("/assets/app.js", "javascript"),
+        ("/assets/styles.css", "css"),
+        ("/favicon.ico", "svg"),
+    ]:
+        r = client.get(path)
+        assert r.status_code == 200, path
+        assert ctype in r.headers["content-type"]
+
+
 def test_upload_rejects_non_pdf(client):
     r = client.post("/upload", files={"file": ("notes.txt", b"hello", "text/plain")})
     assert r.status_code == 400

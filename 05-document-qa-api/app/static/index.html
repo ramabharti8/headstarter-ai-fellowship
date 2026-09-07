@@ -1,111 +1,98 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Document Q&amp;A</title>
-<style>
-  :root { color-scheme: light dark; --bg:#0f172a; --card:#1e293b; --fg:#e2e8f0; --accent:#38bdf8; --muted:#94a3b8; }
-  @media (prefers-color-scheme: light) { :root { --bg:#f1f5f9; --card:#fff; --fg:#0f172a; --accent:#0284c7; --muted:#64748b; } }
-  * { box-sizing: border-box; }
-  body { margin:0; font:15px/1.55 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
-  main { max-width:760px; margin:0 auto; padding:32px 20px 64px; }
-  h1 { font-size:1.5rem; margin:0 0 4px; }
-  p.sub { color:var(--muted); margin:0 0 28px; }
-  .card { background:var(--card); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.15); }
-  label { font-weight:600; display:block; margin-bottom:8px; }
-  input[type=file], input[type=text], textarea { width:100%; padding:10px; border-radius:8px; border:1px solid var(--muted); background:transparent; color:var(--fg); font:inherit; }
-  textarea { min-height:70px; resize:vertical; }
-  button { margin-top:12px; background:var(--accent); color:#04222f; border:0; border-radius:8px; padding:10px 18px; font-weight:700; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:progress; }
-  .out { white-space:pre-wrap; background:rgba(127,127,127,.12); border-radius:8px; padding:14px; margin-top:12px; font-size:14px; }
-  .src { font-size:13px; color:var(--muted); border-left:2px solid var(--accent); padding-left:10px; margin-top:8px; }
-  .pill { display:inline-block; font-size:12px; background:rgba(127,127,127,.15); border-radius:999px; padding:2px 10px; margin-left:8px; color:var(--muted); }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Document Q&amp;A</title>
+  <meta name="description" content="Upload a PDF and ask questions. Retrieval-augmented answers with page citations." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
-<main>
-  <h1>Document Q&amp;A <span class="pill" id="status">checking…</span></h1>
-  <p class="sub">Upload a PDF, then ask questions. Answers cite the pages they came from.</p>
+  <div id="app" class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar__head">
+        <div class="brand">
+          <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+            <path d="M10 7h8l5 5v13H10a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M18 7v5h5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M16 15.5l1.1 2.6 2.6 1.1-2.6 1.1L16 23l-1.1-2.7L12.3 19l2.6-1z" fill="#fff"/>
+          </svg>
+          <div class="brand__text">
+            <strong>Document Q&amp;A</strong>
+            <span class="badge" id="providerBadge"><span class="dot"></span>connecting…</span>
+          </div>
+        </div>
+        <button class="icon-btn sidebar__close" id="sidebarClose" aria-label="Close menu">✕</button>
+      </header>
 
-  <div class="card">
-    <label for="file">1 · Upload a PDF</label>
-    <input type="file" id="file" accept="application/pdf" />
-    <button id="uploadBtn">Upload</button>
-    <div class="out" id="uploadOut" hidden></div>
+      <div class="uploader" id="dropzone">
+        <input type="file" id="fileInput" accept="application/pdf" hidden />
+        <button class="btn btn--block" id="uploadBtn">
+          <svg viewBox="0 0 20 20" class="btn__icon" aria-hidden="true"><path d="M10 3v10m0-10L6 7m4-4l4 4M4 15h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Upload PDF
+        </button>
+        <p class="uploader__hint">or drop a file here</p>
+      </div>
+
+      <div class="doclist" id="docList" role="list">
+        <p class="doclist__label">Documents</p>
+        <div class="doclist__empty" id="docListEmpty">No documents yet</div>
+      </div>
+
+      <footer class="sidebar__foot">
+        <a href="/docs" target="_blank" rel="noreferrer">API docs</a>
+        <button class="link-btn" id="themeToggle" type="button">Toggle theme</button>
+      </footer>
+    </aside>
+
+    <div class="scrim" id="scrim"></div>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="menuBtn" aria-label="Open menu">☰</button>
+        <div class="topbar__doc" id="topbarDoc">
+          <span class="topbar__name" id="activeDocName">No document selected</span>
+          <span class="topbar__meta" id="activeDocMeta"></span>
+        </div>
+        <button class="btn btn--ghost" id="summarizeBtn" disabled>Summarize document</button>
+      </header>
+
+      <section class="thread" id="thread">
+        <div class="empty" id="emptyState">
+          <div class="empty__glyph">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 8h14l8 8v22a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M28 8v8h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          </div>
+          <h1>Ask anything about your PDF</h1>
+          <p>Upload a document, then ask questions in natural language. Every answer cites the pages it came from.</p>
+          <div class="suggests" id="suggests" hidden>
+            <button class="chip">What is this document about?</button>
+            <button class="chip">Summarize the key points</button>
+            <button class="chip">What are the main conclusions?</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="composer" id="composer">
+        <div class="composer__box">
+          <textarea id="input" rows="1" placeholder="Ask a question…" disabled></textarea>
+          <button class="send" id="sendBtn" aria-label="Send" disabled>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10l14-7-5 14-3-6-6-1z" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <p class="composer__hint"><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line</p>
+      </footer>
+    </main>
   </div>
 
-  <div class="card">
-    <label for="q">2 · Ask a question</label>
-    <input type="text" id="docId" placeholder="doc_id (filled in after upload)" />
-    <textarea id="q" placeholder="What are the key findings?"></textarea>
-    <button id="askBtn">Ask</button>
-    <button id="sumBtn" title="Reads the whole document (slower)">Summarize whole document</button>
-    <div class="out" id="askOut" hidden></div>
-  </div>
-</main>
-<script>
-const $ = (id) => document.getElementById(id);
-const api = (p, opts) => fetch(p, opts).then(async r => {
-  const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(body.detail || r.statusText);
-  return body;
-});
+  <div class="toasts" id="toasts" aria-live="polite"></div>
 
-api("/health").then(h => {
-  $("status").textContent = h.fake_ai ? "demo mode (fake-ai)" : h.provider;
-}).catch(() => $("status").textContent = "offline");
-
-$("uploadBtn").onclick = async () => {
-  const f = $("file").files[0];
-  if (!f) return alert("Choose a PDF first.");
-  const btn = $("uploadBtn"); btn.disabled = true;
-  const out = $("uploadOut"); out.hidden = false; out.textContent = "Uploading & indexing…";
-  try {
-    const fd = new FormData(); fd.append("file", f);
-    const r = await api("/upload", { method: "POST", body: fd });
-    $("docId").value = r.doc_id;
-    out.textContent = `Indexed "${r.filename}" — ${r.pages} pages, ${r.chunks} chunks.\ndoc_id: ${r.doc_id}`;
-  } catch (e) { out.textContent = "Error: " + e.message; }
-  finally { btn.disabled = false; }
-};
-
-$("askBtn").onclick = async () => {
-  const doc_id = $("docId").value.trim(), question = $("q").value.trim();
-  if (!doc_id || question.length < 3) return alert("Need a doc_id and a question.");
-  const btn = $("askBtn"); btn.disabled = true;
-  const out = $("askOut"); out.hidden = false; out.textContent = "Thinking…";
-  try {
-    const r = await api("/ask", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ doc_id, question }),
-    });
-    out.innerHTML = "";
-    const a = document.createElement("div"); a.textContent = r.answer; out.appendChild(a);
-    r.sources.forEach(s => {
-      const d = document.createElement("div"); d.className = "src";
-      d.textContent = `p.${s.page ?? "?"} — ${s.snippet}`; out.appendChild(d);
-    });
-  } catch (e) { out.textContent = "Error: " + e.message; }
-  finally { btn.disabled = false; }
-};
-
-$("sumBtn").onclick = async () => {
-  const doc_id = $("docId").value.trim();
-  if (!doc_id) return alert("Need a doc_id (upload first).");
-  const focus = $("q").value.trim() || null;
-  const btn = $("sumBtn"); btn.disabled = true;
-  const out = $("askOut"); out.hidden = false;
-  out.textContent = "Reading the whole document… this can take a while.";
-  try {
-    const r = await api("/summarize", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ doc_id, focus }),
-    });
-    out.textContent = r.summary + `\n\n(${r.chunks_used} chunks read)`;
-  } catch (e) { out.textContent = "Error: " + e.message; }
-  finally { btn.disabled = false; }
-};
-</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.3/marked.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.7/purify.min.js" defer></script>
+  <script src="/assets/app.js" defer></script>
 </body>
 </html>

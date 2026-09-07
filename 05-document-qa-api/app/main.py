@@ -10,6 +10,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .config import Settings, get_settings
@@ -86,9 +87,17 @@ def health(settings: Settings = Depends(_settings)) -> HealthResponse:
     )
 
 
+app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
+
+
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(_STATIC / "index.html")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse(_STATIC / "assets" / "favicon.svg")
 
 
 @app.post(
