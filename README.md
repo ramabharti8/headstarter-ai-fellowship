@@ -33,7 +33,7 @@
 | # | Project | Tech | What It Does |
 |---|---------|------|--------------|
 | 04 | **[AI Customer Support Bot](04-ai-customer-support-bot)** | Next.js 15 · Prisma · pgvector · Auth.js · Gemini | Multi-tenant AI assistant platform: streaming chat with memory, a RAG knowledge base over pgvector with citations, an embeddable widget, and a bearer-authed REST API — Dockerised with unit + e2e tests and CI |
-| 05 | **Document Q&A API** | LangChain · ChromaDB · FastAPI | Upload any document, ask questions in natural language |
+| 05 | **[Document Q&A API](05-document-qa-api)** | LangChain · FAISS · FastAPI · Groq / Gemini | Upload a PDF, ask questions in natural language, get answers with page citations. RAG over a per-document FAISS index with a pluggable LLM (OpenAI / Groq / Gemini / offline), a whole-document map-reduce summarizer, and a chat-style web UI — per-IP rate limiting, optional API-key gate, Dockerised with offline tests and CI |
 | 06 | **AI Code Reviewer** | OpenAI GPT-4 · FastAPI | Reviews code snippets and suggests improvements |
 | 07 | **Sentiment Analysis API** | Hugging Face · FastAPI | Real-time sentiment scoring for text and social media |
 | 08 | **AI Resume Screener** | OpenAI · Python | Scores resumes against job descriptions automatically |
