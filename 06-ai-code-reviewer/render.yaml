@@ -1,0 +1,22 @@
+# One-click deploy to Render (https://render.com). Point a new Blueprint at
+# this repo; Render reads this file. Set CR_OPENAI_API_KEY (or CR_GROQ_API_KEY)
+# in the dashboard after the first deploy.
+services:
+  - type: web
+    name: ai-code-reviewer
+    runtime: docker
+    rootDir: 06-ai-code-reviewer
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: CR_PROVIDER
+        value: auto
+      - key: CR_OPENAI_API_KEY
+        sync: false
+      - key: CR_GROQ_API_KEY
+        sync: false
+      - key: CR_DOCS_ENABLED
+        value: "true"
+      - key: CR_RATE_LIMIT_PER_MIN
+        value: "20"

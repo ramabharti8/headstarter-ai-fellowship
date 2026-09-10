@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      CR_PROVIDER: ${CR_PROVIDER:-auto}
+      CR_OPENAI_API_KEY: ${CR_OPENAI_API_KEY:-}
+      CR_GROQ_API_KEY: ${CR_GROQ_API_KEY:-}
+      CR_CHAT_MODEL: ${CR_CHAT_MODEL:-}
+      CR_FAKE_AI: ${CR_FAKE_AI:-0}
+      CR_API_KEY: ${CR_API_KEY:-}
+      CR_CORS_ORIGINS: ${CR_CORS_ORIGINS:-*}
+    restart: unless-stopped

@@ -1,0 +1,42 @@
+name: Code Reviewer CI
+
+# GitHub runs workflows only from the repository root `.github/workflows/`.
+# Path filter + working-directory scope this to 06-ai-code-reviewer.
+on:
+  push:
+    paths: ["06-ai-code-reviewer/**", ".github/workflows/coderev-ci.yml"]
+  pull_request:
+    paths: ["06-ai-code-reviewer/**", ".github/workflows/coderev-ci.yml"]
+
+concurrency:
+  group: coderev-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 06-ai-code-reviewer
+    env:
+      CR_FAKE_AI: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check app tests
+      - run: ruff format --check app tests
+      - run: pytest
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+        with:
+          context: 06-ai-code-reviewer
+          push: false
+          tags: ai-code-reviewer:ci

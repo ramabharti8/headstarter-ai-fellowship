@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AI Code Reviewer</title>
+  <meta name="description" content="Paste a code snippet or a diff and get a structured AI code review — issues, severity, score and a refactor." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+          <path d="M12.5 11L8.5 16l4 5M19.5 11l4 5-4 5" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M17.5 8.5l-3 15" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/>
+        </svg>
+        <strong>AI Code Reviewer</strong>
+      </div>
+      <div class="topbar__spacer"></div>
+      <span class="pill" id="providerPill" title="Active model">…</span>
+      <button class="icon-link" id="themeToggle" type="button" aria-label="Toggle light / dark theme" title="Toggle theme"></button>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--input">
+        <div class="field field--inline">
+          <label>
+            <span class="field__label">Language</span>
+            <select id="language">
+              <option value="auto">Auto-detect</option>
+              <option>python</option>
+              <option>javascript</option>
+              <option>typescript</option>
+              <option>go</option>
+              <option>rust</option>
+              <option>java</option>
+              <option>c</option>
+              <option>cpp</option>
+              <option>csharp</option>
+              <option>ruby</option>
+              <option>php</option>
+              <option>sql</option>
+              <option>bash</option>
+            </select>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="isDiff" />
+            <span class="field__label">Input is a unified diff</span>
+          </label>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Context <span class="field__opt">(optional)</span></span>
+          <input type="text" id="context" placeholder="What is this code for? e.g. auth middleware for a public API" />
+        </div>
+
+        <div class="field">
+          <span class="field__label">Focus <span class="field__opt">(optional)</span></span>
+          <div class="chips" id="focusChips">
+            <button type="button" class="chip" data-focus="security">security</button>
+            <button type="button" class="chip" data-focus="performance">performance</button>
+            <button type="button" class="chip" data-focus="correctness">correctness</button>
+            <button type="button" class="chip" data-focus="readability">readability</button>
+            <button type="button" class="chip" data-focus="tests">tests</button>
+          </div>
+        </div>
+
+        <div class="field field--grow">
+          <span class="field__label">Code</span>
+          <textarea id="code" spellcheck="false" placeholder="Paste code here…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--ghost" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn btn--primary" id="reviewBtn" type="button">Review code</button>
+        </div>
+      </section>
+
+      <section class="panel panel--output" id="output">
+        <div class="empty" id="emptyState">
+          <div class="empty__glyph">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M18 12L10 24l8 12M30 12l8 12-8 12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h1>Your review appears here</h1>
+          <p>Paste a snippet or a diff on the left, then hit <strong>Review code</strong>. You get a summary, a verdict, an issue list with severity and line numbers, improvement ideas, and a refactored version.</p>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="verdict-row">
+            <div class="verdict-row__left">
+              <span class="badge badge--verdict" id="verdictBadge"></span>
+              <span class="lang-tag" id="langTag" hidden></span>
+            </div>
+            <div class="score">
+              <svg class="score__ring" viewBox="0 0 36 36" aria-hidden="true">
+                <path class="score__track" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+                <path class="score__fill" id="scoreArc" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+              </svg>
+              <span class="score__num" id="scoreNum">–</span>
+            </div>
+          </div>
+
+          <p class="summary" id="summary"></p>
+          <p class="notice" id="truncNotice" hidden>Input was truncated before review — only the first part was analysed.</p>
+
+          <div class="section">
+            <h2>Issues <span class="count" id="issuesCount">0</span></h2>
+            <ul class="issues" id="issues"></ul>
+            <p class="none" id="noIssues" hidden>No issues found. Nice.</p>
+          </div>
+
+          <div class="section" id="improvementsSection">
+            <h2>Improvements</h2>
+            <ul class="improvements" id="improvements"></ul>
+          </div>
+
+          <div class="section" id="refactorSection">
+            <h2>Refactored code
+              <button class="copy-btn" id="copyRefactor" type="button">Copy</button>
+            </h2>
+            <pre class="code-block"><code id="refactoredCode"></code></pre>
+          </div>
+        </div>
+
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <p id="loadingText">Reviewing…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>
