@@ -131,10 +131,7 @@ function renderDocs() {
     item.setAttribute("role", "listitem");
     item.innerHTML = `
       <svg class="doc__icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2h6l4 4v11a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 2v4h4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-      <span class="doc__body">
-        <span class="doc__name"></span>
-        <span class="doc__meta">${d.pages} pages · ${d.chunks} chunks</span>
-      </span>
+      <span class="doc__name"></span>
       <button class="doc__del" title="Delete" aria-label="Delete document">✕</button>`;
     $(".doc__name", item).textContent = d.filename;
     item.addEventListener("click", (ev) => {

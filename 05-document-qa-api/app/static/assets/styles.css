@@ -141,15 +141,15 @@ button { font-family: inherit; }
 /* Subtle active state — a light neutral wash, not a coloured card. */
 .doc.is-active { background: var(--bg-sunken); color: var(--text); }
 .doc__icon { flex-shrink: 0; width: 15px; height: 15px; opacity: 0.6; }
-.doc__body { min-width: 0; flex: 1; }
 .doc__name {
+  flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.doc__meta { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
 .doc__del {
   flex-shrink: 0;
   border: 0;
