@@ -409,7 +409,14 @@ $("#sidebarClose").addEventListener("click", closeSidebar);
 $("#scrim").addEventListener("click", closeSidebar);
 
 /* ------------------------------------------------------------------ boot */
+function stampBuild() {
+  const s = document.querySelector('script[src*="app.js"]');
+  const m = s && s.src.match(/v=([a-f0-9]+)/);
+  $("#buildTag").textContent = m ? `build ${m[1]}` : "build dev";
+}
+
 async function boot() {
+  stampBuild();
   await loadHealth();
   if (state.provider && state.provider.auth_required && !accessKey()) return;
   await loadDocs();

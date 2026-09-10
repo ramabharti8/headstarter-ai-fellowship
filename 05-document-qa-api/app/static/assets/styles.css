@@ -114,6 +114,15 @@ button { font-family: inherit; }
 }
 .doclist__empty { padding: 10px 8px; font-size: 13px; color: var(--text-faint); }
 
+.build-tag {
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-faint);
+  opacity: 0.6;
+}
+
 .doc {
   display: flex;
   align-items: center;
