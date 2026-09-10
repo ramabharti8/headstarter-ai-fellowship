@@ -126,20 +126,21 @@ button { font-family: inherit; }
 .doc {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
-  padding: 8px 8px;
+  padding: 7px 8px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: 6px;
   background: transparent;
   color: var(--text-dim);
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
-.doc:hover { background: var(--bg-sunken); }
-.doc.is-active { background: var(--accent-soft); color: var(--text); }
-.doc__icon { flex-shrink: 0; width: 15px; height: 15px; opacity: 0.7; }
+.doc:hover { background: var(--bg-sunken); color: var(--text); }
+/* Subtle active state — a light neutral wash, not a coloured card. */
+.doc.is-active { background: var(--bg-sunken); color: var(--text); }
+.doc__icon { flex-shrink: 0; width: 15px; height: 15px; opacity: 0.6; }
 .doc__body { min-width: 0; flex: 1; }
 .doc__name {
   font-size: 13px;
@@ -148,7 +149,7 @@ button { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.doc__meta { font-size: 11px; color: var(--text-faint); }
+.doc__meta { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
 .doc__del {
   flex-shrink: 0;
   border: 0;
