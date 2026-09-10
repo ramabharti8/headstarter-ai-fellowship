@@ -21,10 +21,7 @@
             <path d="M18 7v5h5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
             <path d="M16 15.5l1.1 2.6 2.6 1.1-2.6 1.1L16 23l-1.1-2.7L12.3 19l2.6-1z" fill="#fff"/>
           </svg>
-          <div class="brand__text">
-            <strong>Document Q&amp;A</strong>
-            <span class="badge" id="providerBadge"><span class="dot"></span>connecting…</span>
-          </div>
+          <strong class="brand__title">Document Q&amp;A</strong>
         </div>
         <button class="icon-btn sidebar__close" id="sidebarClose" aria-label="Close menu">✕</button>
       </header>
@@ -42,17 +39,6 @@
         <p class="doclist__label">Documents</p>
         <div class="doclist__empty" id="docListEmpty">No documents yet</div>
       </div>
-
-      <footer class="sidebar__foot">
-        <span class="sidebar__foot-icons">
-          <button class="icon-link" id="lockBtn" type="button" hidden
-                  aria-label="Lock — clear access key" title="Lock (sign out)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="icon-link" id="themeToggle" type="button"
-                  aria-label="Toggle light / dark theme" title="Toggle theme"></button>
-        </span>
-      </footer>
     </aside>
 
     <div class="scrim" id="scrim"></div>
@@ -66,6 +52,12 @@
           <span class="topbar__meta" id="activeDocMeta"></span>
         </div>
         <button class="btn btn--ghost" id="summarizeBtn" disabled>Summarize document</button>
+        <button class="icon-link" id="lockBtn" type="button" hidden
+                aria-label="Lock — clear access key" title="Lock (sign out)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-link" id="themeToggle" type="button"
+                aria-label="Toggle light / dark theme" title="Toggle theme"></button>
       </header>
 
       <section class="thread" id="thread">

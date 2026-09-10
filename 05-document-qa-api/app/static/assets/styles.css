@@ -83,26 +83,8 @@ button { font-family: inherit; }
   padding: 18px 16px 14px;
 }
 .brand { display: flex; gap: 10px; align-items: center; }
-.brand__mark { width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; }
-.brand__text { display: flex; flex-direction: column; gap: 3px; }
-.brand__text strong { font-size: 14px; letter-spacing: -0.01em; }
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-dim);
-  text-transform: lowercase;
-}
-.badge .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--text-faint);
-}
-.badge.is-live .dot { background: var(--ok); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15); }
-.badge.is-demo .dot { background: var(--warn); }
-.badge.is-off .dot { background: var(--err); }
+.brand__mark { width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; }
+.brand__title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
 
 .sidebar__close { display: none; }
 
@@ -173,23 +155,6 @@ button { font-family: inherit; }
 .doc:hover .doc__del { opacity: 1; }
 .doc__del:hover { color: var(--err); background: var(--bg); }
 
-.sidebar__foot {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-top: 1px solid var(--border);
-  font-size: 12px;
-}
-.sidebar__foot a, .link-btn {
-  color: var(--text-dim);
-  text-decoration: none;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-}
-.sidebar__foot a:hover, .link-btn:hover { color: var(--accent); }
-.sidebar__foot-icons { margin-left: auto; display: flex; gap: 4px; }
 .icon-link {
   display: inline-flex;
   align-items: center;
@@ -258,12 +223,12 @@ button { font-family: inherit; }
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 8px;
+  padding: 10px 16px 10px 20px;
   border-bottom: 1px solid var(--border);
-  min-height: 58px;
+  min-height: 56px;
 }
-.topbar__doc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar__doc { flex: 1; min-width: 0; display: flex; flex-direction: column; margin-right: 8px; }
 .topbar__name {
   font-size: 14px;
   font-weight: 600;
@@ -292,24 +257,24 @@ button { font-family: inherit; }
   padding: 28px 20px 8px;
   scroll-behavior: smooth;
 }
-.thread__inner { max-width: 760px; margin: 0 auto; }
+.thread__inner { max-width: 720px; margin: 0 auto; }
 
-.msg { display: flex; gap: 14px; margin-bottom: 26px; }
-.msg__avatar {
-  flex-shrink: 0;
-  width: 28px; height: 28px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
+/* Flat, ChatGPT/Claude-style — no bubbles, no avatars, just labelled text. */
+.msg { margin-bottom: 30px; }
+.msg__body { min-width: 0; }
+.msg__role {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
-.msg--user .msg__avatar { background: var(--bg-sunken); color: var(--text-dim); }
-.msg--ai .msg__avatar { background: var(--accent); color: #fff; }
-.msg__body { min-width: 0; flex: 1; padding-top: 3px; }
-.msg__role { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-bottom: 3px; }
-
-.msg--user .msg__text { white-space: pre-wrap; word-break: break-word; }
+.msg--user .msg__text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  line-height: 1.6;
+}
 .prose { word-break: break-word; }
 .prose > *:first-child { margin-top: 0; }
 .prose > *:last-child { margin-bottom: 0; }

@@ -94,22 +94,13 @@ $("#lockBtn").addEventListener("click", () => {
 
 /* ------------------------------------------------------------------ health */
 async function loadHealth() {
-  const badge = $("#providerBadge");
   try {
     const h = await api("/health");
     state.provider = h;
-    if (h.fake_ai) {
-      badge.className = "badge is-demo";
-      badge.innerHTML = '<span class="dot"></span>demo mode';
-    } else {
-      badge.className = "badge is-live";
-      badge.innerHTML = `<span class="dot"></span>${h.provider}`;
-    }
     $("#lockBtn").hidden = !h.auth_required;
     if (h.auth_required && !accessKey()) showKeyModal(false);
   } catch {
-    badge.className = "badge is-off";
-    badge.innerHTML = '<span class="dot"></span>offline';
+    /* offline — the thread / composer states already reflect this */
   }
 }
 
@@ -241,10 +232,6 @@ function renderActive() {
 
 function messageNode(m) {
   const node = el("div", `msg msg--${m.role === "user" ? "user" : "ai"}`);
-  const avatar = el("div", "msg__avatar", m.role === "user" ? "You"[0] : "");
-  if (m.role !== "user") {
-    avatar.innerHTML = '<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 2l1.7 4.3L16 8l-4.3 1.7L10 14l-1.7-4.3L4 8l4.3-1.7z" fill="#fff"/></svg>';
-  }
   const body = el("div", "msg__body");
   body.appendChild(el("div", "msg__role", m.role === "user" ? "You" : "Assistant"));
 
@@ -291,7 +278,6 @@ function messageNode(m) {
     body.appendChild(foot);
   }
 
-  node.appendChild(avatar);
   node.appendChild(body);
   return node;
 }
