@@ -14,6 +14,7 @@ class HealthResponse(BaseModel):
     ai_enabled: bool
     fake_ai: bool
     auth_required: bool = False
+    docs_enabled: bool = True
 
 
 class UploadResponse(BaseModel):

@@ -44,10 +44,13 @@
       </div>
 
       <footer class="sidebar__foot">
-        <a href="/docs" target="_blank" rel="noreferrer" id="apiDocsLink">API docs</a>
-        <span class="sidebar__foot-right">
-          <button class="link-btn" id="lockBtn" type="button" hidden>Lock</button>
-          <button class="link-btn" id="themeToggle" type="button">Theme</button>
+        <span class="sidebar__foot-icons">
+          <button class="icon-link" id="lockBtn" type="button" hidden
+                  aria-label="Lock — clear access key" title="Lock (sign out)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="icon-link" id="themeToggle" type="button"
+                  aria-label="Toggle light / dark theme" title="Toggle theme"></button>
         </span>
       </footer>
     </aside>

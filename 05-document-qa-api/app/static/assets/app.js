@@ -56,9 +56,14 @@ const getThread = (id) => store.get(threadKey(id), []);
 const setThread = (id, msgs) => store.set(threadKey(id), msgs);
 
 /* ------------------------------------------------------------------ theme */
+const SUN = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   store.set("qa:theme", t);
+  // Show the icon of the mode you'd switch TO.
+  $("#themeToggle").innerHTML = t === "dark" ? SUN : MOON;
 }
 applyTheme(store.get("qa:theme", "dark"));
 $("#themeToggle").addEventListener("click", () => {
@@ -101,7 +106,6 @@ async function loadHealth() {
       badge.innerHTML = `<span class="dot"></span>${h.provider}`;
     }
     $("#lockBtn").hidden = !h.auth_required;
-    $("#apiDocsLink").hidden = h.auth_required;
     if (h.auth_required && !accessKey()) showKeyModal(false);
   } catch {
     badge.className = "badge is-off";

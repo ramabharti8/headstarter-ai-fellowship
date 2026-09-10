@@ -165,6 +165,7 @@ def health(settings: Settings = Depends(_settings)) -> HealthResponse:
         ai_enabled=settings.ai_enabled,
         fake_ai=settings.is_fake,
         auth_required=settings.auth_required,
+        docs_enabled=settings.docs_enabled,
     )
 
 

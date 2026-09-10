@@ -175,8 +175,8 @@ button { font-family: inherit; }
 
 .sidebar__foot {
   display: flex;
-  justify-content: space-between;
-  padding: 12px 18px;
+  align-items: center;
+  padding: 10px 16px;
   border-top: 1px solid var(--border);
   font-size: 12px;
 }
@@ -189,7 +189,20 @@ button { font-family: inherit; }
   font-size: 12px;
 }
 .sidebar__foot a:hover, .link-btn:hover { color: var(--accent); }
-.sidebar__foot-right { display: flex; gap: 12px; }
+.sidebar__foot-icons { margin-left: auto; display: flex; gap: 4px; }
+.icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+}
+.icon-link:hover { color: var(--accent); background: var(--bg-sunken); }
+.icon-link svg { width: 16px; height: 16px; }
 
 /* ============ modal ============ */
 .modal {
