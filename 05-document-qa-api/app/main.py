@@ -171,26 +171,24 @@ def health(settings: Settings = Depends(_settings)) -> HealthResponse:
 app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
 
 
-def _asset_hash() -> str:
+def _index_html() -> str:
     h = hashlib.md5()
     for name in ("assets/app.js", "assets/styles.css"):
         h.update((_STATIC / name).read_bytes())
-    return h.hexdigest()[:8]
-
-
-_ASSET_V = _asset_hash()
-_INDEX_HTML = (
-    (_STATIC / "index.html")
-    .read_text(encoding="utf-8")
-    .replace("/assets/app.js", f"/assets/app.js?v={_ASSET_V}")
-    .replace("/assets/styles.css", f"/assets/styles.css?v={_ASSET_V}")
-)
+    v = h.hexdigest()[:8]
+    return (
+        (_STATIC / "index.html")
+        .read_text(encoding="utf-8")
+        .replace("/assets/app.js", f"/assets/app.js?v={v}")
+        .replace("/assets/styles.css", f"/assets/styles.css?v={v}")
+    )
 
 
 @app.get("/", include_in_schema=False)
 def index() -> HTMLResponse:
-    # The ?v= stamps force the browser to refetch JS/CSS whenever they change.
-    return HTMLResponse(_INDEX_HTML)
+    # Rebuilt per request (cheap) so the ?v= stamp always matches the files on
+    # disk and the browser refetches JS/CSS whenever they change.
+    return HTMLResponse(_index_html())
 
 
 @app.get("/favicon.ico", include_in_schema=False)

@@ -45,6 +45,9 @@
 }
 
 * { box-sizing: border-box; }
+/* Must win over rules like `.modal { display: grid }` that otherwise keep a
+   [hidden] element on screen (same specificity, later source order). */
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0;
