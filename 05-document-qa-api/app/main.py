@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import tempfile
 from contextlib import asynccontextmanager
@@ -18,7 +19,7 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
@@ -170,9 +171,26 @@ def health(settings: Settings = Depends(_settings)) -> HealthResponse:
 app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
 
 
+def _asset_hash() -> str:
+    h = hashlib.md5()
+    for name in ("assets/app.js", "assets/styles.css"):
+        h.update((_STATIC / name).read_bytes())
+    return h.hexdigest()[:8]
+
+
+_ASSET_V = _asset_hash()
+_INDEX_HTML = (
+    (_STATIC / "index.html")
+    .read_text(encoding="utf-8")
+    .replace("/assets/app.js", f"/assets/app.js?v={_ASSET_V}")
+    .replace("/assets/styles.css", f"/assets/styles.css?v={_ASSET_V}")
+)
+
+
 @app.get("/", include_in_schema=False)
-def index() -> FileResponse:
-    return FileResponse(_STATIC / "index.html")
+def index() -> HTMLResponse:
+    # The ?v= stamps force the browser to refetch JS/CSS whenever they change.
+    return HTMLResponse(_INDEX_HTML)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
