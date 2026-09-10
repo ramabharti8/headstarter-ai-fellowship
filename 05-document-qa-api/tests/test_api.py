@@ -31,6 +31,10 @@ def test_static_assets_served(client):
         assert r.status_code == 200, path
         assert ctype in r.headers["content-type"]
 
+    # UI + assets must not be cached, so a stale app.js can't linger
+    assert "no-cache" in client.get("/").headers.get("cache-control", "")
+    assert "no-cache" in client.get("/assets/app.js").headers.get("cache-control", "")
+
 
 def test_upload_rejects_non_pdf(client):
     r = client.post("/upload", files={"file": ("notes.txt", b"hello", "text/plain")})

@@ -79,6 +79,16 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def _no_cache_ui(request: Request, call_next):
+    """Force browsers to revalidate the UI so a stale app.js can't linger."""
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/assets"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+
 def _settings() -> Settings:
     return get_settings()
 
