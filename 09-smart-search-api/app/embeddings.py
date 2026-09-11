@@ -93,14 +93,20 @@ class GeminiEmbedder(Embedder):
         out = []
         for text in texts:
             resp = self._genai.embed_content(
-                model=self.model, content=text, task_type="retrieval_document"
+                model=self.model,
+                content=text,
+                task_type="retrieval_document",
+                output_dimensionality=self.dim,
             )
             out.append(_normalise(resp["embedding"]))
         return out
 
     def embed_query(self, text: str) -> Vector:
         resp = self._genai.embed_content(
-            model=self.model, content=text, task_type="retrieval_query"
+            model=self.model,
+            content=text,
+            task_type="retrieval_query",
+            output_dimensionality=self.dim,
         )
         return _normalise(resp["embedding"])
 

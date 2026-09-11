@@ -14,14 +14,17 @@ Provider = Literal["openai", "gemini", "fastembed", "fake"]
 # The index is bound to whichever one built it (see Store._check_dim).
 DIMS: dict[str, int] = {
     "openai": 1536,  # text-embedding-3-small
-    "gemini": 768,  # text-embedding-004
+    "gemini": 768,  # gemini-embedding-001, truncated via output_dimensionality
     "fastembed": 384,  # BAAI/bge-small-en-v1.5, local ONNX, no API key
     "fake": 64,  # deterministic hashed bag-of-words, tests/CI only
 }
 
 _MODEL_NAMES: dict[str, str] = {
     "openai": "text-embedding-3-small",
-    "gemini": "models/text-embedding-004",
+    # google deprecated text-embedding-004 in favour of gemini-embedding-001;
+    # its native output is 3072-dim but supports MRL truncation to 768 via
+    # output_dimensionality, which is what GeminiEmbedder requests.
+    "gemini": "models/gemini-embedding-001",
     "fastembed": "BAAI/bge-small-en-v1.5",
     "fake": "fake-hash-64",
 }
