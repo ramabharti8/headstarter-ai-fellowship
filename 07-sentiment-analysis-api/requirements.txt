@@ -1,6 +1,11 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-transformers==4.35.2
-torch==2.1.1
-pydantic==2.5.0
-numpy==1.24.3
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- Model runtime ---
+# torch is large; the Dockerfile installs the CPU-only wheel from
+# https://download.pytorch.org/whl/cpu to keep the image small.
+transformers==4.48.0
+torch==2.7.1

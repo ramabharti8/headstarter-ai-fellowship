@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SENT_BACKEND: ${SENT_BACKEND:-auto}
+      SENT_MODEL_NAME: ${SENT_MODEL_NAME:-cardiffnlp/twitter-roberta-base-sentiment-latest}
+      SENT_DEVICE: ${SENT_DEVICE:-auto}
+      SENT_FAKE_MODEL: ${SENT_FAKE_MODEL:-0}
+      SENT_API_KEY: ${SENT_API_KEY:-}
+      SENT_CORS_ORIGINS: ${SENT_CORS_ORIGINS:-*}
+      SENT_RATE_LIMIT_PER_MIN: ${SENT_RATE_LIMIT_PER_MIN:-60}
+      SENT_DOCS_ENABLED: ${SENT_DOCS_ENABLED:-true}
+    restart: unless-stopped

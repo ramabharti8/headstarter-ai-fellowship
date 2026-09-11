@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Sentiment Analysis API</title>
+  <meta name="description" content="Real-time sentiment scoring for text and social media — positive / neutral / negative with a full probability distribution." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+          <circle cx="12" cy="14" r="1.7" fill="#fff"/>
+          <circle cx="20" cy="14" r="1.7" fill="#fff"/>
+          <path d="M10.5 20c1.6 2 3.4 3 5.5 3s3.9-1 5.5-3" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/>
+        </svg>
+        <strong>Sentiment Analysis API</strong>
+      </div>
+      <div class="topbar__spacer"></div>
+      <span class="pill" id="modelPill" title="Active model / backend">…</span>
+      <button class="icon-link" id="themeToggle" type="button" aria-label="Toggle light / dark theme" title="Toggle theme"></button>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--input">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" id="tabSingle" role="tab" type="button">Single</button>
+          <button class="tab" id="tabBatch" role="tab" type="button">Batch</button>
+        </div>
+
+        <div class="field field--grow" id="singlePane">
+          <span class="field__label">Text</span>
+          <textarea id="text" spellcheck="false" placeholder="The new product update is absolutely amazing!"></textarea>
+        </div>
+
+        <div class="field field--grow" id="batchPane" hidden>
+          <span class="field__label">Texts <span class="field__opt">(one per line)</span></span>
+          <textarea id="batch" spellcheck="false" placeholder="I love this release&#10;Support never replied, terrible&#10;The meeting is at noon"></textarea>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" id="preprocess" checked />
+          <span class="field__label">Normalise @mentions and links (recommended for tweets)</span>
+        </label>
+
+        <div class="actions">
+          <button class="btn btn--ghost" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn btn--primary" id="analyzeBtn" type="button">Analyze</button>
+        </div>
+      </section>
+
+      <section class="panel panel--output" id="output">
+        <div class="empty" id="emptyState">
+          <div class="empty__glyph">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="18" cy="21" r="2.4" fill="currentColor"/><circle cx="30" cy="21" r="2.4" fill="currentColor"/><path d="M15 30c2.4 3 5 4.5 9 4.5s6.6-1.5 9-4.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+          </div>
+          <h1>Sentiment appears here</h1>
+          <p>Type a sentence on the left and hit <strong>Analyze</strong>. You get a label, a confidence score and the full probability split across negative / neutral / positive.</p>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="verdict-row">
+            <span class="badge" id="sentimentBadge"></span>
+            <div class="gauge">
+              <svg class="gauge__ring" viewBox="0 0 36 36" aria-hidden="true">
+                <path class="gauge__track" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+                <path class="gauge__fill" id="gaugeArc" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+              </svg>
+              <span class="gauge__num" id="gaugeNum">–</span>
+            </div>
+          </div>
+
+          <p class="meta" id="resultMeta"></p>
+          <p class="notice" id="truncNotice" hidden>Text was longer than the model window — only the first part was scored.</p>
+
+          <div class="bars" id="bars"></div>
+        </div>
+
+        <div class="batch-result" id="batchResult" hidden>
+          <div class="section">
+            <h2>Results <span class="count" id="batchCount">0</span>
+              <span class="meta meta--inline" id="batchMeta"></span>
+            </h2>
+            <ul class="batch-list" id="batchList"></ul>
+          </div>
+        </div>
+
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <p>Scoring…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

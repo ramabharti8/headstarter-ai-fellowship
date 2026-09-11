@@ -1,0 +1,21 @@
+# One-click deploy to Render (https://render.com). Point a new Blueprint at
+# this repo; Render reads this file. The model is baked into the image at build
+# time, so the first request is fast. Note: the free plan's 512 MB RAM is tight
+# for roberta-base — use a paid instance, or set SENT_FAKE_MODEL=true for a demo.
+services:
+  - type: web
+    name: sentiment-analysis-api
+    runtime: docker
+    rootDir: 07-sentiment-analysis-api
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    healthCheckPath: /health
+    envVars:
+      - key: SENT_BACKEND
+        value: auto
+      - key: SENT_DEVICE
+        value: cpu
+      - key: SENT_DOCS_ENABLED
+        value: "true"
+      - key: SENT_RATE_LIMIT_PER_MIN
+        value: "60"
