@@ -384,7 +384,8 @@ _FEEDBACK_RULES: list[tuple[re.Pattern[str], str]] = [
 
 def heuristic_revise(full_email: str, feedback: str, tone: Tone | None) -> DraftOutcome:
     outcome = _parse_email(full_email, fallback_subject="Revised message")
-    subject, body = outcome.subject, outcome.body
+    subject, original_body = outcome.subject, outcome.body
+    body = original_body
 
     matched_tone = tone
     action = None
@@ -392,13 +393,14 @@ def heuristic_revise(full_email: str, feedback: str, tone: Tone | None) -> Draft
         if pattern.search(feedback):
             if label in _SIGNOFFS:
                 matched_tone = matched_tone or label  # type: ignore[assignment]
-            else:
+            elif action is None:
                 action = label
 
     if matched_tone:
         # Swap the sign-off line to reflect the new tone; keep the rest of the
         # body (a full LLM would rewrite the whole thing — this is the
-        # deterministic offline approximation).
+        # deterministic offline approximation). A no-op when the email is
+        # already in that tone — handled below.
         new_signoff = _SIGNOFFS.get(matched_tone, _SIGNOFFS["professional"])
         body = re.sub(
             r"(?:" + "|".join(re.escape(s) for s in _SIGNOFFS.values()) + r")",
@@ -417,7 +419,13 @@ def heuristic_revise(full_email: str, feedback: str, tone: Tone | None) -> Draft
         )
     elif action == "expand":
         body += f"\n\nAdditionally: {feedback.strip().rstrip('.')}."
-    elif action is None and not matched_tone:
+
+    if body == original_body:
+        # Nothing above actually changed the text (e.g. the feedback asked
+        # for a tone the email is already in, or matched no rule at all —
+        # "make it longer" alone doesn't hit any pattern). Revise should
+        # never silently return the same email, so fall back to appending
+        # the feedback as a note.
         body += f"\n\nOne more note: {feedback.strip().rstrip('.')}."
 
     full_email = f"Subject: {subject}\n\n{body}"
