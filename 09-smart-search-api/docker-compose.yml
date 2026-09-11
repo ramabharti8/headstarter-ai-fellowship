@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SS_PROVIDER: ${SS_PROVIDER:-auto}
+      SS_OPENAI_API_KEY: ${SS_OPENAI_API_KEY:-}
+      SS_GEMINI_API_KEY: ${SS_GEMINI_API_KEY:-}
+      SS_FAKE_EMBED: ${SS_FAKE_EMBED:-0}
+      SS_DATA_DIR: /app/data
+      SS_API_KEY: ${SS_API_KEY:-}
+      SS_CORS_ORIGINS: ${SS_CORS_ORIGINS:-*}
+    volumes:
+      - search-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  search-data:

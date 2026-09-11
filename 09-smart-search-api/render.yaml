@@ -1,0 +1,34 @@
+# One-click deploy to Render (https://render.com). Point a new Blueprint at
+# this repo; Render reads this file. Runs with the zero-API-key fastembed
+# provider by default — set SS_OPENAI_API_KEY (or SS_GEMINI_API_KEY) in the
+# dashboard for a hosted embedding model instead.
+#
+# NOTE: Render's free plan has an ephemeral filesystem — the index is lost on
+# every redeploy/restart. Attach a persistent disk (paid plans) mounted at
+# SS_DATA_DIR to keep documents across deploys; the commented `disk:` block
+# below shows how.
+services:
+  - type: web
+    name: smart-search-api
+    runtime: docker
+    rootDir: 09-smart-search-api
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SS_PROVIDER
+        value: auto
+      - key: SS_OPENAI_API_KEY
+        sync: false
+      - key: SS_GEMINI_API_KEY
+        sync: false
+      - key: SS_DATA_DIR
+        value: /app/data
+      - key: SS_DOCS_ENABLED
+        value: "true"
+      - key: SS_RATE_LIMIT_PER_MIN
+        value: "60"
+    # disk:
+    #   name: search-data
+    #   mountPath: /app/data
+    #   sizeGB: 1
