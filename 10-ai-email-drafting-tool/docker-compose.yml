@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      EM_PROVIDER: ${EM_PROVIDER:-auto}
+      EM_OPENAI_API_KEY: ${EM_OPENAI_API_KEY:-}
+      EM_GROQ_API_KEY: ${EM_GROQ_API_KEY:-}
+      EM_CHAT_MODEL: ${EM_CHAT_MODEL:-}
+      EM_FAKE_AI: ${EM_FAKE_AI:-0}
+      EM_API_KEY: ${EM_API_KEY:-}
+      EM_CORS_ORIGINS: ${EM_CORS_ORIGINS:-*}
+    restart: unless-stopped

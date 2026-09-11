@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AI Email Drafting Tool</title>
+  <meta name="description" content="Turn a list of bullet points into a polished, tone-matched email." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+          <path d="M7 10.5h18v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-13z" fill="none" stroke="#fff" stroke-width="1.8"/>
+          <path d="M7.5 11l8.5 6.5L24.5 11" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <strong>AI Email Drafting Tool</strong>
+      </div>
+      <div class="topbar__spacer"></div>
+      <span class="pill" id="statusPill">…</span>
+      <button class="icon-link" id="themeToggle" type="button" aria-label="Toggle light / dark theme" title="Toggle theme"></button>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--input">
+        <div class="field">
+          <span class="field__label">Key points</span>
+          <div class="bullets" id="bullets"></div>
+          <button class="link-btn" id="addBullet" type="button">+ add point</button>
+        </div>
+
+        <div class="field field--inline">
+          <label>
+            <span class="field__label">Recipient <span class="field__opt">(optional)</span></span>
+            <input type="text" id="recipient" placeholder="Team" />
+          </label>
+          <label>
+            <span class="field__label">Sender <span class="field__opt">(optional)</span></span>
+            <input type="text" id="sender" placeholder="Rama" />
+          </label>
+        </div>
+
+        <div class="field field--inline">
+          <label>
+            <span class="field__label">Tone</span>
+            <select id="tone">
+              <option value="professional">Professional</option>
+              <option value="friendly">Friendly</option>
+              <option value="assertive">Assertive</option>
+              <option value="empathetic">Empathetic</option>
+              <option value="persuasive">Persuasive</option>
+              <option value="apologetic">Apologetic</option>
+            </select>
+          </label>
+          <label>
+            <span class="field__label">Length</span>
+            <select id="length">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </label>
+          <label>
+            <span class="field__label">Variants</span>
+            <select id="variants">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Context <span class="field__opt">(optional)</span></span>
+          <textarea id="context" spellcheck="false" placeholder="Anything else the writer should know…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--ghost" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn btn--primary" id="draftBtn" type="button">Draft email</button>
+        </div>
+      </section>
+
+      <section class="panel panel--output" id="output">
+        <div class="empty" id="emptyState">
+          <div class="empty__glyph">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="12" width="34" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 13l16 12 16-12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h1>Your email appears here</h1>
+          <p>Add a few bullet points, pick a tone, and hit <strong>Draft email</strong>. You'll get a subject line and a full email — with room to give feedback and revise it.</p>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="variant-tabs" id="variantTabs"></div>
+          <p class="notice" id="truncNotice" hidden>Some input was truncated before drafting.</p>
+
+          <div class="field">
+            <span class="field__label">Subject</span>
+            <div class="email-box email-box--subject" id="subjectBox"></div>
+          </div>
+
+          <div class="field field--grow">
+            <span class="field__label">Body
+              <button class="copy-btn" id="copyBtn" type="button">Copy full email</button>
+            </span>
+            <div class="email-box email-box--body" id="bodyBox"></div>
+          </div>
+
+          <div class="field revise">
+            <span class="field__label">Revise <span class="field__opt">(give feedback, e.g. "make it shorter")</span></span>
+            <div class="revise__row">
+              <input type="text" id="feedback" placeholder="Make it more formal and shorter" />
+              <button class="btn btn--primary" id="reviseBtn" type="button">Revise</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <p id="loadingText">Drafting…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

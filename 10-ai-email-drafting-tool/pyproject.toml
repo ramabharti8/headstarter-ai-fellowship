@@ -1,0 +1,18 @@
+[project]
+name = "ai-email-drafting-tool"
+version = "1.0.0"
+description = "Turn bullet points into a polished, tone-matched email."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["B008"]  # FastAPI Depends() in defaults
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

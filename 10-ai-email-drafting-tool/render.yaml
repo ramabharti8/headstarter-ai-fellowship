@@ -1,0 +1,22 @@
+# One-click deploy to Render (https://render.com). Point a new Blueprint at
+# this repo; Render reads this file. Set EM_OPENAI_API_KEY (or EM_GROQ_API_KEY)
+# in the dashboard after the first deploy.
+services:
+  - type: web
+    name: ai-email-drafting-tool
+    runtime: docker
+    rootDir: 10-ai-email-drafting-tool
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: EM_PROVIDER
+        value: auto
+      - key: EM_OPENAI_API_KEY
+        sync: false
+      - key: EM_GROQ_API_KEY
+        sync: false
+      - key: EM_DOCS_ENABLED
+        value: "true"
+      - key: EM_RATE_LIMIT_PER_MIN
+        value: "30"
