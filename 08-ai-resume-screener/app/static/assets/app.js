@@ -12,13 +12,13 @@ $("themeToggle").addEventListener("click", () => {
   localStorage.setItem("resume-theme", next);
 });
 
-/* ---------- health / provider pill ---------- */
+/* ---------- health / status pill (no provider/model exposed) ---------- */
 fetch("/health")
   .then((r) => r.json())
   .then((h) => {
     const pill = $("providerPill");
-    pill.textContent = h.fake_ai ? "offline heuristic" : `${h.provider} · ${h.model}`;
-    pill.title = `provider=${h.provider} model=${h.model}`;
+    pill.textContent = h.fake_ai ? "Offline mode" : "AI-powered";
+    pill.removeAttribute("title");
     if (h.fake_ai) pill.classList.add("pill--fake");
   })
   .catch(() => ($("providerPill").textContent = "offline"));
