@@ -1,0 +1,18 @@
+[project]
+name = "ai-resume-screener"
+version = "1.0.0"
+description = "Upload a resume and a job description, get a structured AI hiring screen."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["B008"]  # FastAPI Depends()/File()/Form() in defaults
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

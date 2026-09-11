@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AI Resume Screener</title>
+  <meta name="description" content="Upload a resume and a job description, get a structured hiring screen — score, grade, strengths, gaps and a recommendation." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="var(--accent)"/>
+          <rect x="9" y="7" width="14" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2"/>
+          <path d="M12.5 13h7M12.5 17h7M12.5 21h4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <strong>AI Resume Screener</strong>
+      </div>
+      <div class="topbar__spacer"></div>
+      <span class="pill" id="providerPill" title="Active model">…</span>
+      <button class="icon-link" id="themeToggle" type="button" aria-label="Toggle light / dark theme" title="Toggle theme"></button>
+    </header>
+
+    <main class="grid">
+      <section class="panel panel--input">
+        <div class="field">
+          <span class="field__label">Resume <span class="field__opt">(PDF, DOCX or text)</span></span>
+          <label class="dropzone" id="dropzone" for="resumeFile">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M12 4l-4 4M12 4l4 4M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="dropzoneText">Click to choose a file, or drag one here</span>
+            <input type="file" id="resumeFile" accept=".pdf,.docx,.txt,.md" hidden />
+          </label>
+        </div>
+
+        <div class="field field--grow">
+          <span class="field__label">Job Description</span>
+          <textarea id="jd" spellcheck="false" placeholder="Paste the job description here…"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn--ghost" id="sampleBtn" type="button">Load sample</button>
+          <button class="btn btn--primary" id="screenBtn" type="button">Screen resume</button>
+        </div>
+      </section>
+
+      <section class="panel panel--output" id="output">
+        <div class="empty" id="emptyState">
+          <div class="empty__glyph">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="9" width="22" height="30" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M19 19h10M19 25h10M19 31h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          </div>
+          <h1>Your screening result appears here</h1>
+          <p>Upload a resume and paste a job description on the left, then hit <strong>Screen resume</strong>. You get a score, grade, strengths, gaps and a hire/maybe/reject call.</p>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <div class="verdict-row">
+            <div class="verdict-row__left">
+              <span class="badge badge--rec" id="recBadge"></span>
+              <span class="grade-tag" id="gradeTag"></span>
+            </div>
+            <div class="score">
+              <svg class="score__ring" viewBox="0 0 36 36" aria-hidden="true">
+                <path class="score__track" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+                <path class="score__fill" id="scoreArc" d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31" />
+              </svg>
+              <span class="score__num" id="scoreNum">–</span>
+            </div>
+          </div>
+
+          <p class="summary" id="summary"></p>
+          <p class="notice" id="truncNotice" hidden></p>
+
+          <div class="section">
+            <h2>Matched skills <span class="count" id="matchedCount">0</span></h2>
+            <div class="chips chips--matched" id="matchedChips"></div>
+          </div>
+
+          <div class="section">
+            <h2>Missing skills <span class="count" id="missingCount">0</span></h2>
+            <div class="chips chips--missing" id="missingChips"></div>
+          </div>
+
+          <div class="two-col">
+            <div class="section">
+              <h2>Strengths</h2>
+              <ul class="list list--strengths" id="strengths"></ul>
+            </div>
+            <div class="section">
+              <h2>Gaps</h2>
+              <ul class="list list--gaps" id="gaps"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="loading" id="loading" hidden>
+          <div class="spinner"></div>
+          <p>Screening…</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

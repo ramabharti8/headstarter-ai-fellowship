@@ -1,68 +1,229 @@
-import os
-import json
-from fastapi import FastAPI, UploadFile, File, Form
+"""FastAPI application: upload a resume + job description, get a structured
+hiring screen."""
+
+from __future__ import annotations
+
+import hashlib
+import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from openai import OpenAI
-import pypdf
-import io
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI(title="AI Resume Screener")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+from . import __version__
+from .config import Settings, get_settings
+from .extract import ExtractionError, extract_text
+from .limits import SlidingWindowLimiter
+from .schemas import HealthResponse, ScreenResponse
+from .screener import Screener
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
+)
+log = logging.getLogger("resumescreener")
 
-SCREENER_PROMPT = """You are an expert HR recruiter and talent acquisition specialist.
-Analyze the resume against the job description and return a JSON object with:
-{
-  "score": <0-100>,
-  "grade": "<A/B/C/D/F>",
-  "summary": "<2-sentence overview>",
-  "strengths": ["<strength1>", "<strength2>", ...],
-  "gaps": ["<gap1>", "<gap2>", ...],
-  "recommendation": "<hire/maybe/reject>",
-  "key_skills_matched": ["<skill1>", ...],
-  "key_skills_missing": ["<skill1>", ...]
-}
-Return ONLY the JSON, no markdown."""
+_STATIC = Path(__file__).parent / "static"
 
 
-def extract_text_from_pdf(file_bytes: bytes) -> str:
-    reader = pypdf.PdfReader(io.BytesIO(file_bytes))
-    return "\n".join(page.extract_text() or "" for page in reader.pages)
-
-
-class ScreenResult(BaseModel):
-    score: int
-    grade: str
-    summary: str
-    strengths: list[str]
-    gaps: list[str]
-    recommendation: str
-    key_skills_matched: list[str]
-    key_skills_missing: list[str]
-
-
-@app.post("/screen", response_model=ScreenResult)
-async def screen_resume(
-    resume: UploadFile = File(...),
-    job_description: str = Form(...),
-):
-    resume_text = extract_text_from_pdf(await resume.read())
-    prompt = f"JOB DESCRIPTION:\n{job_description}\n\nRESUME:\n{resume_text}"
-
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": SCREENER_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.2,
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_settings()
+    app.state.settings = settings
+    app.state.screener = Screener(settings)
+    log.info(
+        "AI Resume Screener v%s ready (provider=%s model=%s)",
+        __version__,
+        settings.resolved_provider,
+        settings.active_chat_model or "-",
     )
-    return json.loads(response.choices[0].message.content)
+    yield
 
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+_docs = get_settings().docs_enabled
+app = FastAPI(
+    title="AI Resume Screener",
+    version=__version__,
+    description="Upload a resume and a job description, get a structured "
+    "hiring screen: score, grade, strengths, gaps and a recommendation.",
+    lifespan=lifespan,
+    docs_url="/docs" if _docs else None,
+    redoc_url="/redoc" if _docs else None,
+    openapi_url="/openapi.json" if _docs else None,
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().cors_origin_list,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def _no_cache_ui(request: Request, call_next):
+    """Force browsers to revalidate the UI so a stale app.js can't linger."""
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/assets"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+
+def _settings() -> Settings:
+    return get_settings()
+
+
+def require_key(
+    settings: Settings = Depends(_settings),
+    authorization: str | None = Header(default=None),
+    x_api_key: str | None = Header(default=None),
+) -> None:
+    """Gate for /screen. A no-op unless RS_API_KEY is configured."""
+    if not settings.auth_required:
+        return
+    supplied = x_api_key or ""
+    if not supplied and authorization and authorization.lower().startswith("bearer "):
+        supplied = authorization[7:]
+    if supplied.strip() != settings.api_key:
+        raise HTTPException(401, "Missing or invalid API key.")
+
+
+_rl = SlidingWindowLimiter(get_settings().rate_limit_per_min, 60)
+
+
+def _client_ip(request: Request, settings: Settings) -> str:
+    if settings.trust_forwarded:
+        xff = request.headers.get("x-forwarded-for")
+        if xff:
+            return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def rate_limit(request: Request, settings: Settings = Depends(_settings)) -> None:
+    # Gated deployments (RS_API_KEY set) trust the caller; skip limiting.
+    if settings.auth_required or not _rl.enabled:
+        return
+    ip = _client_ip(request, settings)
+    if not _rl.allow(ip):
+        raise HTTPException(
+            429,
+            "Rate limit exceeded — slow down and try again shortly.",
+            headers={"Retry-After": str(_rl.retry_after(ip))},
+        )
+
+
+guard = [Depends(require_key), Depends(rate_limit)]
+
+
+def get_screener() -> Screener:
+    return app.state.screener
+
+
+@app.get("/health", response_model=HealthResponse, tags=["meta"])
+def health(settings: Settings = Depends(_settings)) -> HealthResponse:
+    return HealthResponse(
+        version=__version__,
+        provider=settings.resolved_provider,
+        model=settings.active_chat_model or "-",
+        fake_ai=settings.is_fake,
+        auth_required=settings.auth_required,
+        docs_enabled=settings.docs_enabled,
+    )
+
+
+app.mount("/assets", StaticFiles(directory=_STATIC / "assets"), name="assets")
+
+
+def _index_html() -> str:
+    h = hashlib.md5()
+    for name in ("assets/app.js", "assets/styles.css"):
+        h.update((_STATIC / name).read_bytes())
+    v = h.hexdigest()[:8]
+    return (
+        (_STATIC / "index.html")
+        .read_text(encoding="utf-8")
+        .replace("/assets/app.js", f"/assets/app.js?v={v}")
+        .replace("/assets/styles.css", f"/assets/styles.css?v={v}")
+    )
+
+
+@app.get("/", include_in_schema=False)
+def index() -> HTMLResponse:
+    return HTMLResponse(_index_html())
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse(_STATIC / "assets" / "favicon.svg")
+
+
+@app.post(
+    "/screen",
+    response_model=ScreenResponse,
+    tags=["screen"],
+    dependencies=guard,
+    responses={
+        400: {"description": "Invalid request"},
+        401: {"description": "Bad key"},
+        413: {"description": "File too large"},
+        422: {"description": "Unreadable file"},
+        429: {"description": "Rate limit"},
+        502: {"description": "Upstream model error"},
+    },
+)
+async def screen_resume(
+    resume: UploadFile = File(..., description="Resume file: PDF, DOCX or text."),
+    job_description: str = Form(..., min_length=1),
+    settings: Settings = Depends(_settings),
+    screener: Screener = Depends(get_screener),
+) -> ScreenResponse:
+    if not job_description.strip():
+        raise HTTPException(400, "job_description is required.")
+
+    data = await resume.read()
+    if len(data) > settings.max_upload_bytes:
+        raise HTTPException(
+            413,
+            f"Resume file exceeds {settings.max_upload_bytes // 1024} KB.",
+        )
+
+    try:
+        resume_text = extract_text(data, resume.filename or "", resume.content_type or "")
+    except ExtractionError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+    try:
+        outcome, resume_truncated, jd_truncated = screener.screen(
+            resume_text, job_description
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 - surface provider failures cleanly
+        log.exception("screen failed")
+        raise HTTPException(502, f"Model provider error: {exc}") from exc
+
+    return ScreenResponse(
+        score=outcome.score,
+        grade=outcome.grade,
+        summary=outcome.summary,
+        strengths=outcome.strengths,
+        gaps=outcome.gaps,
+        recommendation=outcome.recommendation,
+        key_skills_matched=outcome.key_skills_matched,
+        key_skills_missing=outcome.key_skills_missing,
+        provider=screener.provider,
+        model=screener.model or "-",
+        resume_truncated=resume_truncated,
+        jd_truncated=jd_truncated,
+    )

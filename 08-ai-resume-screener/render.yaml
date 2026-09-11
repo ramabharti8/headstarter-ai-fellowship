@@ -1,0 +1,22 @@
+# One-click deploy to Render (https://render.com). Point a new Blueprint at
+# this repo; Render reads this file. Set RS_OPENAI_API_KEY (or RS_GROQ_API_KEY)
+# in the dashboard after the first deploy.
+services:
+  - type: web
+    name: ai-resume-screener
+    runtime: docker
+    rootDir: 08-ai-resume-screener
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: RS_PROVIDER
+        value: auto
+      - key: RS_OPENAI_API_KEY
+        sync: false
+      - key: RS_GROQ_API_KEY
+        sync: false
+      - key: RS_DOCS_ENABLED
+        value: "true"
+      - key: RS_RATE_LIMIT_PER_MIN
+        value: "20"

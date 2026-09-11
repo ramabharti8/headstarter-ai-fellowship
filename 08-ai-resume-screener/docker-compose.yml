@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      RS_PROVIDER: ${RS_PROVIDER:-auto}
+      RS_OPENAI_API_KEY: ${RS_OPENAI_API_KEY:-}
+      RS_GROQ_API_KEY: ${RS_GROQ_API_KEY:-}
+      RS_CHAT_MODEL: ${RS_CHAT_MODEL:-}
+      RS_FAKE_AI: ${RS_FAKE_AI:-0}
+      RS_API_KEY: ${RS_API_KEY:-}
+      RS_CORS_ORIGINS: ${RS_CORS_ORIGINS:-*}
+    restart: unless-stopped
