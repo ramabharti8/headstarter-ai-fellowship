@@ -1,16 +1,20 @@
+const path = require("path");
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
 
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "*";
+const CLIENT_DIST = path.join(__dirname, "..", "client", "dist");
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json());
-app.use(express.static("client/build"));
+app.use(express.static(CLIENT_DIST));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
+const io = new Server(server, { cors: { origin: CLIENT_ORIGIN, methods: ["GET", "POST"] } });
 
 const rooms = new Map();
 const users = new Map();
@@ -64,6 +68,14 @@ io.on("connection", (socket) => {
 
 app.get("/api/rooms", (_req, res) => {
   res.json({ rooms: [...rooms.keys()] });
+});
+
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(CLIENT_DIST, "index.html"));
 });
 
 const PORT = process.env.PORT || 3001;
