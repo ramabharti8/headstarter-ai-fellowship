@@ -1,58 +1,32 @@
-# Real-Time Notification System
+# SignalBox — Real-Time Notification System
 
-Push notification delivery system with delivery tracking, built with Socket.IO and Redis.
+Real-time notification delivery with JWT auth, topic subscriptions, a notification center (bell + inbox), multi-channel delivery (in-app + email), and Redis-backed delivery tracking.
 
-## What It Does
+See [HANDBOOK.md](./HANDBOOK.md) for full architecture, setup, and deployment documentation.
 
-- Sends real-time push notifications to connected users
-- Queues notifications in Redis for offline users (delivered on reconnect)
-- Tracks delivery status: `sent` → `delivered` → `acknowledged`
-- Supports broadcast notifications to all connected users
-- Delivery receipt lookup by notification ID
-
-## Tech Stack
-
-- **Real-Time**: Socket.IO
-- **Queue**: Redis (ioredis)
-- **Server**: Node.js + Express
-
-## Setup
+## Quick start
 
 ```bash
-cp .env.example .env
-# Requires a running Redis instance
-npm install
-npm start             # Server on port 3004
+cd server && npm install && cp .env.example .env
+cd ../client && npm install && cp .env.example .env
+docker compose up -d mongo redis   # from the project root
+npm run dev:server                 # terminal 1, from the project root
+npm run dev:client                 # terminal 2, from the project root
 ```
 
-## API
+Open http://localhost:5175
+
+## Stack
+
+- **Frontend:** React + Vite, React Router, socket.io-client
+- **Backend:** Node.js, Express, Socket.IO, MongoDB (Mongoose), Redis (ioredis), JWT auth, Nodemailer
+- **Deployment:** Dockerfiles for both services + `docker-compose.yml`
+
+## Structure
 
 ```
-POST /api/notify              — Send notification to a specific user
-POST /api/broadcast           — Broadcast to all connected users
-GET  /api/delivery/:id        — Get delivery status
-GET  /health                  — Health check + connected user count
+server/   Express + Socket.IO notification API/delivery server
+client/   React + Vite frontend (light/amber theme)
+docker-compose.yml
+HANDBOOK.md
 ```
-
-### Example
-
-```bash
-# Send to a user
-curl -X POST http://localhost:3004/api/notify \
-  -H "Content-Type: application/json" \
-  -d '{"userId": "user_123", "title": "New Order", "message": "Order #456 confirmed", "type": "success"}'
-
-# → {"notificationId": "uuid", "status": "delivered"}
-
-# Check delivery
-curl http://localhost:3004/api/delivery/<notificationId>
-```
-
-## Socket Events (Client)
-
-| Event | Direction | Description |
-|-------|-----------|-------------|
-| `authenticate` | client → server | `{userId}` — register user |
-| `acknowledge` | client → server | `{notificationId}` — mark read |
-| `notification` | server → client | Incoming notification |
-| `broadcast` | server → client | Broadcast notification |

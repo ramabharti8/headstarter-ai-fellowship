@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27019:27017"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      PORT: 3004
+      MONGO_URI: mongodb://mongo:27017/realtime_notifications
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_string}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8082}
+      NODE_ENV: production
+      DEFAULT_TOPICS: orders,alerts,marketing,system
+    ports:
+      - "3004:3004"
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8082:80"
+
+volumes:
+  mongo_data:
+  redis_data:
