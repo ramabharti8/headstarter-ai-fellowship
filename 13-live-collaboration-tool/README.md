@@ -1,45 +1,32 @@
-# Live Collaboration Tool
+# SyncBoard — Live Collaboration Tool
 
-Real-time shared whiteboard and collaborative document editing via WebSockets.
+Real-time collaborative documents (true CRDT sync via Yjs) and a shared whiteboard, with JWT auth, MongoDB persistence, live presence/cursors, and version history.
 
-## What It Does
+See [HANDBOOK.md](./HANDBOOK.md) for full architecture, setup, and deployment documentation.
 
-- **Document Editing**: Multiple users edit the same document simultaneously
-- **Cursor Tracking**: See where other users' cursors are
-- **Whiteboard**: Draw strokes collaboratively on a shared canvas
-- **Persistence**: Documents stored in memory (swap for Redis/DB for durability)
-
-## Tech Stack
-
-- **Backend**: Node.js + Express + Socket.IO
-- **Frontend**: React (in `client/`)
-- **Optional**: Yjs for conflict-free CRDT document merging
-
-## Project Structure
-
-```
-13-live-collaboration-tool/
-├── server/
-│   └── index.js      # Collaboration server
-├── client/           # React frontend
-├── package.json
-└── README.md
-```
-
-## Setup
+## Quick start
 
 ```bash
-npm install
-npm start             # Server on port 3003
+cd server && npm install && cp .env.example .env
+cd ../client && npm install && cp .env.example .env
+docker compose up -d mongo   # from the project root
+npm run dev:server           # terminal 1, from the project root
+npm run dev:client           # terminal 2, from the project root
 ```
 
-## Socket Events
+Open http://localhost:5174
 
-| Event | Description |
-|-------|-------------|
-| `join_document` | Join a document editing session |
-| `document_change` | Broadcast text delta to peers |
-| `cursor_move` | Update cursor position |
-| `join_whiteboard` | Join a whiteboard session |
-| `draw_stroke` | Broadcast a draw stroke |
-| `clear_whiteboard` | Clear the board for all users |
+## Stack
+
+- **Frontend:** React + Vite, React Router, socket.io-client, Yjs
+- **Backend:** Node.js, Express, Socket.IO, Yjs, MongoDB (Mongoose), JWT auth
+- **Deployment:** Dockerfiles for both services + `docker-compose.yml`
+
+## Structure
+
+```
+server/   Express + Socket.IO collaboration/API server
+client/   React + Vite frontend
+docker-compose.yml
+HANDBOOK.md
+```

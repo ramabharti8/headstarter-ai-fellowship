@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27018:27017"
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      PORT: 3003
+      MONGO_URI: mongodb://mongo:27017/live_collaboration
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_string}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8081}
+      NODE_ENV: production
+    ports:
+      - "3003:3003"
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8081:80"
+
+volumes:
+  mongo_data:
