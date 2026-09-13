@@ -44,7 +44,7 @@
 
 | # | Project | Tech | What It Does |
 |---|---------|------|--------------|
-| 11 | **Real-Time Chat App** | Node.js · Socket.IO · React | Multi-room chat with live typing indicators |
+| 11 | **[Real-Time Chat App](11-realtime-chat-app)** | React · Node.js · Socket.IO · MongoDB | Persistent public rooms and 1:1 direct messages with JWT auth, live presence, typing indicators, read receipts, and file/image sharing — Dockerised for deployment |
 | 12 | **[Video Conferencing App](12-video-conferencing-app)** | React · WebRTC · Node.js · Socket.IO · MongoDB | Multi-party peer-to-peer video calls (WebRTC mesh) with JWT auth, password-protected rooms, screen sharing, live chat & reactions, and in-call recording — Dockerised for deployment |
 | 13 | **[Live Collaboration Tool](13-live-collaboration-tool)** | React · Yjs (CRDT) · Node.js · Socket.IO · MongoDB | Real-time collaborative documents with true CRDT merge (Yjs) and a shared whiteboard, with JWT auth, live presence/cursors, version history with restore, and durable MongoDB persistence — Dockerised for deployment |
 | 14 | **[Real-Time Notification System](14-realtime-notification-system)** | React · Node.js · Socket.IO · Redis · MongoDB | Real-time notification delivery with JWT auth, topic subscriptions, a bell + inbox notification center with live popups, in-app + email channels, and Redis-backed delivery tracking — Dockerised for deployment |

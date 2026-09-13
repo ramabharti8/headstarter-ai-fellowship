@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27020:27017"
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://mongo:27017/realtime_chat
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_string}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8083}
+      NODE_ENV: production
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "3001:3001"
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8083:80"
+
+volumes:
+  mongo_data:
+  uploads_data:
