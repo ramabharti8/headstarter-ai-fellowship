@@ -45,7 +45,7 @@
 | # | Project | Tech | What It Does |
 |---|---------|------|--------------|
 | 11 | **Real-Time Chat App** | Node.js · Socket.IO · React | Multi-room chat with live typing indicators |
-| 12 | **Video Conferencing App** | WebRTC · Node.js · Socket.IO | Peer-to-peer video calls with screen sharing |
+| 12 | **[Video Conferencing App](12-video-conferencing-app)** | React · WebRTC · Node.js · Socket.IO · MongoDB | Multi-party peer-to-peer video calls (WebRTC mesh) with JWT auth, password-protected rooms, screen sharing, live chat & reactions, and in-call recording — Dockerised for deployment |
 | 13 | **Live Collaboration Tool** | WebSockets · React | Real-time shared whiteboard / document editing |
 | 14 | **Real-Time Notification System** | Socket.IO · Redis · Node.js | Push notifications with delivery tracking |
 
