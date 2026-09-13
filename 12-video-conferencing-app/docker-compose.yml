@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  server:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      PORT: 3002
+      MONGO_URI: mongodb://mongo:27017/video_conferencing
+      JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_string}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:8080}
+      NODE_ENV: production
+    volumes:
+      - recordings_data:/app/uploads
+    ports:
+      - "3002:3002"
+
+  client:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "8080:80"
+
+volumes:
+  mongo_data:
+  recordings_data:

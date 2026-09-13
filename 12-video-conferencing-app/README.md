@@ -1,52 +1,32 @@
-# Video Conferencing App
+# MeetFlow — Video Conferencing App
 
-Peer-to-peer video conferencing with screen sharing, built with WebRTC and Socket.IO signaling.
+A full-stack, production-grade peer-to-peer video conferencing app: multi-party WebRTC mesh calls, screen sharing, real-time chat & reactions, JWT auth with MongoDB-backed rooms, and in-call recording with server-side storage.
 
-## What It Does
+See [HANDBOOK.md](./HANDBOOK.md) for full architecture, setup, and deployment documentation.
 
-- Create and join video conference rooms
-- Peer-to-peer video/audio via WebRTC (no media server needed)
-- Screen sharing support
-- Mute audio / disable video controls
-- Participant join/leave events
-
-## Tech Stack
-
-- **Signaling**: Node.js + Express + Socket.IO
-- **Video**: WebRTC (browser-native)
-- **Frontend**: Vanilla JS or React (in `public/`)
-
-## Project Structure
-
-```
-12-video-conferencing-app/
-├── server/
-│   └── index.js      # Signaling server
-├── public/           # Frontend HTML/JS
-├── package.json
-└── README.md
-```
-
-## Setup
+## Quick start
 
 ```bash
-npm install
-npm start             # Signaling server on port 3002
+npm run install:all
+cp server/.env.example server/.env
+cp client/.env.example client/.env
+npm run dev:server   # terminal 1
+npm run dev:client   # terminal 2
 ```
 
-## WebRTC Flow
+Open http://localhost:5173
 
-1. Client A creates a room → gets `roomId`
-2. Client B joins with `roomId`
-3. Signaling server exchanges `offer`, `answer`, `ice_candidate` events
-4. Direct P2P connection established between peers
+## Stack
 
-## Socket Events
+- **Frontend:** React + Vite, React Router, socket.io-client, native WebRTC
+- **Backend:** Node.js, Express, Socket.IO, MongoDB (Mongoose), JWT auth, Multer
+- **Deployment:** Dockerfiles for both services + `docker-compose.yml`
 
-| Event | Description |
-|-------|-------------|
-| `join_room` | Join a video room |
-| `offer` / `answer` | WebRTC SDP exchange |
-| `ice_candidate` | ICE candidate exchange |
-| `screen_share_started` | Notify peers of screen share |
-| `toggle_audio` / `toggle_video` | Media state updates |
+## Structure
+
+```
+server/   Express + Socket.IO signaling/API server
+client/   React + Vite frontend
+docker-compose.yml
+HANDBOOK.md
+```
