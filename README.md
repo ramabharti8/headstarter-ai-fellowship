@@ -1,6 +1,6 @@
 # Headstarter AI Fellowship — 14 Production Projects
 
-> 14 AI/ML systems shipped in 7 weeks during the Headstarter AI Fellowship (Remote · New York, USA · Jul–Sep 2024). Top cohort ranking.
+> 14 AI/ML systems shipped in 12 weeks during the Headstarter AI Fellowship (Remote · New York, USA · Jul–Sep 2024). Top cohort ranking.
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange)](https://tensorflow.org)
@@ -12,9 +12,9 @@
 
 ## Fellowship Overview
 
-**Program:** Headstarter AI Fellowship — Competitive 7-week AI engineering sprint  
+**Program:** Headstarter AI Fellowship — Competitive 12-week AI engineering program  
 **Location:** Remote · New York, USA  
-**Result:** Top cohort · 14 production projects in 7 weeks · 10+ AI APIs shipped
+**Result:** Top cohort · 14 production projects in 12 weeks · 10+ AI APIs shipped
 
 ---
 
